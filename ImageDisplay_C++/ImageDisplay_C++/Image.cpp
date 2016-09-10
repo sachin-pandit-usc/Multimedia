@@ -148,22 +148,28 @@ void slope (float x1, float y1, float x2, float y2, float *m, float *c) {
 	*c = y1 - (*m) * x1;
 }
 
-void intersection(float x1, float y1, float x2, float y2, float *newx, float *newy)
+void intersection(float x1, float y1, float x2, float y2, float *newx, float *newy, float angle)
 {
 	float m1, c1, m2, c2;
 	float lx1, ly1, lx2, ly2;
 
-	for (int i = 0; i < 4; i++) {
-		if (i == 0) {
-			lx1 = 255; ly1 = 0; lx2 = 256; ly2 = 256;
-		} else if (i == 1) {
-			lx1 = 0; ly1 = 255; lx2 = 256; ly2 = 256;
-		} else if (i == 2) {
-			lx1 = 0; ly1 = 0; lx2 = 1, ly2 = 256;
-		} else {
-			lx1 = 0, ly1 = 0; lx2 = 256, ly2 = 1;
-		}
+	if (angle > 0 && angle <= 90) {
+		lx1 = 255; ly1 = 0; lx2 = 255; ly2 = 255;
+	}
+	else if (angle > 90 && angle <= 180) {
+		lx1 = 0; ly1 = 255; lx2 = 255; ly2 = 255;
+	}
+	else if (angle > 180 && angle <= 270) {
+		lx1 = 0; ly1 = 0; lx2 = 1, ly2 = 255;
+	}
+	else {
+		lx1 = 0, ly1 = 0; lx2 = 255, ly2 = 1;
+	}
 
+
+
+	for (int i = 0; i < 4; i++) {
+		
 		slope (lx1, ly1, lx2, ly2, &m1, &c1);
 		slope (x1, y1, x2, y2, &m2, &c2);
 
@@ -196,12 +202,12 @@ bool MyImage::CreatImageCanv()
 	int height = Height;
 
 	x1 = 128;  y1 = 128; x2 = 255; y2 = 0;
-	for (int i = 45; i < 360; i += 45) {
+	for (int i = 10; i <= 360; i += 10) {
 		float radian = 0.01746031746 * i;
 		draw_helper(Data, x1, y1, x2, y2, width, height);
 		x1 = 128;  y1 = 128; x2 = 255; y2 = 0;
-		rotate_point(x1, x2, radian, &x2, &y2);
-		intersection(x1, y1, x2, y2, &x2, &y2);
+		rotate_point(x1, y1, radian, &x2, &y2);
+		intersection(x1, y1, x2, y2, &x2, &y2, i);
 		if (x2 < 0 || y2 < 0)
 			break;
 		if (x2 > 255)
