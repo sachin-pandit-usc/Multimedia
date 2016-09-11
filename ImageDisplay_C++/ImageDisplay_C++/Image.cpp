@@ -41,6 +41,25 @@ MyImage::MyImage( MyImage *otherImage)
 }
 
 
+void MyImage::copy(const MyImage &inImage, int scale) {
+	int width = inImage.Height;
+	int height = inImage.Height;
+	int outindex = 0;
+	Data = new char[(512 / scale) * (512 / scale) * 3];
+	strcpy((char *)inImage.ImagePath, ImagePath);
+	int count = 1;
+	for (int i = 0; i < (width*height); i += scale) {
+		Data[3 * outindex] = inImage.Data[3 * i];
+		Data[3 * outindex + 1] = inImage.Data[3 * i + 1];
+		Data[3 * outindex + 2] = inImage.Data[3 * i + 2];
+		outindex++;
+		count++;
+		if (count == (512/scale)) {
+			i = i + ((512)*(scale - 1));
+			count = 1;
+		}
+	}
+}
 
 // = operator overload
 MyImage & MyImage::operator= (const MyImage &otherImage)

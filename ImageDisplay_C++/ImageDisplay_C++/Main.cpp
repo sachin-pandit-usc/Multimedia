@@ -61,8 +61,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		AfxMessageBox( "Could not create image\nUsage - Image.exe image.rgb w h");
 		//return FALSE;
 	}
-	else
-		outImage = inImage;
+	else {
+		outImage.setWidth(512/scale);
+		outImage.setHeight(512/scale);
+		outImage.copy(inImage, scale);
+	}
 
 	// Initialize global strings
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -229,10 +232,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 								  0,0,0,inImage.getHeight(),
 								  inImage.getImageData(),&bmi,DIB_RGB_COLORS);
 
+				BITMAPINFO bmi1;
+				CBitmap bitmap1;
+				memset(&bmi1, 0, sizeof(bmi1));
+				bmi1.bmiHeader.biSize = sizeof(bmi1.bmiHeader);
+				bmi1.bmiHeader.biWidth = outImage.getWidth();
+				bmi1.bmiHeader.biHeight = -outImage.getHeight();  // Use negative height.  DIB is top-down.
+				bmi1.bmiHeader.biPlanes = 1;
+				bmi1.bmiHeader.biBitCount = 24;
+				bmi1.bmiHeader.biCompression = BI_RGB;
+				bmi1.bmiHeader.biSizeImage = outImage.getWidth()*outImage.getHeight();
+
+
 				SetDIBitsToDevice(hdc,
-								  outImage.getWidth()+50,100,outImage.getWidth(),outImage.getHeight(),
+								  inImage.getWidth(),100,outImage.getWidth(),outImage.getHeight(),
 								  0,0,0,outImage.getHeight(),
-								  outImage.getImageData(),&bmi,DIB_RGB_COLORS);
+								  outImage.getImageData(),&bmi1,DIB_RGB_COLORS);
 
 
 				EndPaint(hWnd, &ps);

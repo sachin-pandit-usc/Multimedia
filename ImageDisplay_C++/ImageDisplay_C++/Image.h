@@ -48,6 +48,7 @@ public:
 	MyImage & operator= (const MyImage & otherImage);
 
 	// Reader & Writer functions
+	void    copy(const MyImage &inImage, int scale);
 	void	setWidth( const int w)  { Width = w; }; 
 	void	setHeight(const int h) { Height = h; }; 
 	void	setImageData( const char *img ) { Data = (char *)img; };
