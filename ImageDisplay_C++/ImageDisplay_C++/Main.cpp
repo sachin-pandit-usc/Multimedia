@@ -64,7 +64,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	else {
 		outImage.setWidth(512/scale);
 		outImage.setHeight(512/scale);
-		outImage.copy(inImage, scale);
+		outImage.copy(inImage, scale, alias);
 	}
 
 	// Initialize global strings

@@ -10,6 +10,8 @@
 #include "Image.h"
 #include <cmath>
 
+void draw_helper(char *Data, int x1, int y1, int x2, int y2, int Width, int Height);
+
 // Constructor and Desctructors
 MyImage::MyImage() 
 {
@@ -41,22 +43,55 @@ MyImage::MyImage( MyImage *otherImage)
 }
 
 
-void MyImage::copy(const MyImage &inImage, int scale) {
+char get_average(char *Data, int index, int scale) {
+	float average = 0;
+	int res;
+	for (int i = index; i < (index + scale); i++) {
+		average += Data[3 * i];
+	}
+	average /= scale;
+	res = (int)average;
+	return res;
+}
+
+
+void MyImage::copy(const MyImage &inImage, int scale, int alias) {
 	int width = inImage.Height;
 	int height = inImage.Height;
 	int outindex = 0;
 	Data = new char[(512 / scale) * (512 / scale) * 3];
 	strcpy((char *)inImage.ImagePath, ImagePath);
-	int count = 1;
-	for (int i = 0; i < (width*height); i += scale) {
-		Data[3 * outindex] = inImage.Data[3 * i];
-		Data[3 * outindex + 1] = inImage.Data[3 * i + 1];
-		Data[3 * outindex + 2] = inImage.Data[3 * i + 2];
-		outindex++;
-		count++;
-		if (count == (512/scale)) {
-			i = i + ((512)*(scale - 1));
-			count = 1;
+
+	if (alias == 0) {
+		int count = 1;
+		for (int i = 0; i < (width*height); i += scale) {
+			Data[3 * outindex] = inImage.Data[3 * i];
+			Data[3 * outindex + 1] = inImage.Data[3 * i + 1];
+			Data[3 * outindex + 2] = inImage.Data[3 * i + 2];
+			outindex++;
+			count++;
+			if (count == (512 / scale)) {
+				i = i + (512)*(scale - 1);
+				count = 0;
+			}
+		}
+		draw_helper(Data, 0, 0, 256 / scale, 0, 512 / scale, 512 / scale);
+		draw_helper(Data, 256 / scale, 0, 256 / scale, 256 / scale, 512 / scale, 512 / scale);
+		draw_helper(Data, 0, 256 / scale, 256 / scale, 256 / scale, 512 / scale, 512 / scale);
+		draw_helper(Data, 0, 0, 0, 256 / scale, 512 / scale, 512 / scale);
+	}
+	else {
+		int count = 1;
+		for (int i = 0; i < (width*height); i += scale) {
+			Data[3 * outindex] = get_average (inImage.Data, i, scale);
+			Data[3 * outindex + 1] = get_average (inImage.Data, i + 1, scale);
+			Data[3 * outindex + 2] = get_average (inImage.Data, i + 2, scale);
+			outindex++;
+			count++;
+			if (count == (512 / scale)) {
+				i = i + (512)*(scale - 1);
+				count = 0;
+			}
 		}
 	}
 }
@@ -176,10 +211,10 @@ void intersection(float x1, float y1, float x2, float y2, float *newx, float *ne
 		lx1 = 0; ly1 = 255; lx2 = 255; ly2 = 255;
 	}
 	else if (angle > 180 && angle <= 270) {
-		lx1 = 0; ly1 = 0; lx2 = 1, ly2 = 255;
+		lx1 = 0; ly1 = 0; lx2 = 0, ly2 = 255;
 	}
 	else {
-		lx1 = 0, ly1 = 0; lx2 = 255, ly2 = 1;
+		lx1 = 0, ly1 = 0; lx2 = 255, ly2 = 0;
 	}
 
 
@@ -218,7 +253,7 @@ bool MyImage::CreatImageCanv(int line)
 	int height = Height;
 
 	
-	x1 = 128;  y1 = 128; x2 = 255; y2 = 0;
+	x1 = 128;  y1 = 128; x2 = 256; y2 = 0;
 	draw_helper(Data, 0, 0, 255, 0, 512, 512);
 	draw_helper(Data, 255, 0, 255, 255, 512, 512);
 	draw_helper(Data, 0, 255, 255, 255, 512, 512);
@@ -232,10 +267,12 @@ bool MyImage::CreatImageCanv(int line)
 		intersection(x1, y1, x2, y2, &x2, &y2, i*360/line);
 		if (x2 < 0 || y2 < 0)
 			break;
-		if (x2 > 255)
+		/*
+		if (x2 > 256)
 			x2 = 255;
 		if (y2 > 255)
 			y2 = 255;
+		*/
 	}
     
 	return true;
