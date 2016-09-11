@@ -65,15 +65,12 @@ void rotate_point(float cx, float cy, float angle, float *newx, float *newy)
 	float s = sin(angle);
 	float c = cos(angle);
 
-	// translate point back to origin:
 	*newx -= cx;
 	*newy -= cy;
 
-	// rotate point
 	float xnew = *newx * c - *newy * s;
 	float ynew = *newx * s + *newy * c;
 
-	// translate point back:
 	*newx = xnew + cx;
 	*newy = ynew + cy;
 }
@@ -184,7 +181,7 @@ void intersection(float x1, float y1, float x2, float y2, float *newx, float *ne
 
 // MyImage::CreatImageCanv
 // Function to create white image with two dots connected
-bool MyImage::CreatImageCanv()
+bool MyImage::CreatImageCanv(int line)
 {	
 	// Allocate Data structure and copy
 	Data = new char[Width*Height*3];
@@ -201,13 +198,19 @@ bool MyImage::CreatImageCanv()
 	int width = Width;
 	int height = Height;
 
+	
 	x1 = 128;  y1 = 128; x2 = 255; y2 = 0;
-	for (int i = 10; i <= 360; i += 10) {
-		float radian = 0.01746031746 * i;
+	draw_helper(Data, 0, 0, 255, 0, 512, 512);
+	draw_helper(Data, 255, 0, 255, 255, 512, 512);
+	draw_helper(Data, 0, 255, 255, 255, 512, 512);
+	draw_helper(Data, 0, 0, 0, 255, 512, 512);
+
+	for (int i = 1; i <= line; i++) {
+		float radian = (0.01746031746 * 360 * i)/line ;
 		draw_helper(Data, x1, y1, x2, y2, width, height);
 		x1 = 128;  y1 = 128; x2 = 255; y2 = 0;
 		rotate_point(x1, y1, radian, &x2, &y2);
-		intersection(x1, y1, x2, y2, &x2, &y2, i);
+		intersection(x1, y1, x2, y2, &x2, &y2, i*360/line);
 		if (x2 < 0 || y2 < 0)
 			break;
 		if (x2 > 255)

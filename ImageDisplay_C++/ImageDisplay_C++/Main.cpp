@@ -41,11 +41,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	HACCEL hAccelTable;
 
 	// Read in the image and its copy
-	int w, h;
+	int line, scale, alias;
 	char ImagePath[_MAX_PATH];
-	sscanf(lpCmdLine, "%s %d %d", &ImagePath, &w, &h);
-	inImage.setWidth(w);
-	inImage.setHeight(h);
+	sscanf(lpCmdLine, "%d %d %d", &line, &scale, &alias);
+	inImage.setWidth(512);
+	inImage.setHeight(512);
+	/*
 	if ( strstr(ImagePath, ".rgb" )==NULL )
 	{ 
 		AfxMessageBox( "Image has to be a '.rgb' file\nUsage - Image.exe image.rgb w h");
@@ -53,15 +54,15 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	}
 	else
 	{
-		inImage.setImagePath(ImagePath);
-		if ( !inImage.CreatImageCanv() )
-		{ 
-			AfxMessageBox( "Could not create image\nUsage - Image.exe image.rgb w h");
-			//return FALSE;
-		}
-		else
-			outImage = inImage;
+	*/
+	inImage.setImagePath("part1.rgb");
+	if ( !inImage.CreatImageCanv(line) )
+	{ 
+		AfxMessageBox( "Could not create image\nUsage - Image.exe image.rgb w h");
+		//return FALSE;
 	}
+	else
+		outImage = inImage;
 
 	// Initialize global strings
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);

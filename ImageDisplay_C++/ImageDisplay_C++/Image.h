@@ -60,8 +60,7 @@ public:
 	// Input Output operations
 	bool	ReadImage();
 	bool	WriteImage();
-	bool    CreatImageCanv(int x1, int y1, int x2, int y2);
-	bool    CreatImageCanv();
+	bool    CreatImageCanv(int line);
 	// Modifications
 	bool	Modify();
 
