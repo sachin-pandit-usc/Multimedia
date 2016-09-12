@@ -41,9 +41,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	HACCEL hAccelTable;
 
 	// Read in the image and its copy
-	int line, scale, alias;
+	int line, alias;
+	float scale;
 	char ImagePath[_MAX_PATH];
-	sscanf(lpCmdLine, "%d %d %d", &line, &scale, &alias);
+	sscanf(lpCmdLine, "%d %f %d", &line, &scale, &alias);
 	inImage.setWidth(512);
 	inImage.setHeight(512);
 	/*
@@ -245,7 +246,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 
 				SetDIBitsToDevice(hdc,
-								  inImage.getWidth(),100,outImage.getWidth(),outImage.getHeight(),
+								  inImage.getWidth()+ 50,100,outImage.getWidth(),outImage.getHeight(),
 								  0,0,0,outImage.getHeight(),
 								  outImage.getImageData(),&bmi1,DIB_RGB_COLORS);
 

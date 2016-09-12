@@ -45,52 +45,47 @@ MyImage::MyImage( MyImage *otherImage)
 
 char get_average(char *Data, int index, int scale) {
 	float average = 0;
-	int res;
-	for (int i = index; i < (index + scale); i++) {
-		average += Data[3 * i];
+	int res, i, j;
+	for (i = 0; i < scale; i++) {
+		for (j = 0; j < scale; j++) {
+			average += Data[(3*512*i) + ((3*j) + index)];
+		}
 	}
-	average /= scale;
+	average = average / (scale * scale);
 	res = (int)average;
 	return res;
 }
 
 
-void MyImage::copy(const MyImage &inImage, int scale, int alias) {
+void MyImage::copy(const MyImage &inImage, int scale, float alias) {
 	int width = inImage.Height;
 	int height = inImage.Height;
 	int outindex = 0;
-	Data = new char[(512 / scale) * (512 / scale) * 3];
+	Data = new char[((512 / scale)+1) * ((512 / scale)+1) * 3];
 	strcpy((char *)inImage.ImagePath, ImagePath);
 
 	if (alias == 0) {
-		int count = 1;
-		for (int i = 0; i < (width*height); i += scale) {
-			Data[3 * outindex] = inImage.Data[3 * i];
-			Data[3 * outindex + 1] = inImage.Data[3 * i + 1];
-			Data[3 * outindex + 2] = inImage.Data[3 * i + 2];
-			outindex++;
-			count++;
-			if (count == (512 / scale)) {
-				i = i + (512)*(scale - 1);
-				count = 0;
+		for (int i = 0; i < width; i += scale) {
+			for (int j = 0; j < width; j += scale) {
+				Data[3 * outindex] = inImage.Data[(3*512*i) + ((3*j)+0)];
+				Data[3 * outindex + 1] = inImage.Data[(3 * 512 * i) + ((3 * j) + 1)];
+				Data[3 * outindex + 2] = inImage.Data[(3 * 512 * i) + ((3 * j) + 2)];
+				outindex++;
 			}
 		}
-		draw_helper(Data, 0, 0, 256 / scale, 0, 512 / scale, 512 / scale);
-		draw_helper(Data, 256 / scale, 0, 256 / scale, 256 / scale, 512 / scale, 512 / scale);
-		draw_helper(Data, 0, 256 / scale, 256 / scale, 256 / scale, 512 / scale, 512 / scale);
-		draw_helper(Data, 0, 0, 0, 256 / scale, 512 / scale, 512 / scale);
+		draw_helper(Data, 0, 0, (512 / scale) - 1, 0, 512 / scale, 512 / scale);
+		draw_helper(Data, (512 / scale) - 1, 0, (512 / scale) - 1, (512 / scale) - 1, 512 / scale, 512 / scale);
+		draw_helper(Data, 0, (512 / scale) - 1, (512 / scale) - 1, (512 / scale) - 1, (512 / scale) - 1, 512 / scale);
+		draw_helper(Data, 0, 0, 0, (512 / scale) - 1, 512 / scale, 512 / scale);
 	}
 	else {
 		int count = 1;
-		for (int i = 0; i < (width*height); i += scale) {
-			Data[3 * outindex] = get_average (inImage.Data, i, scale);
-			Data[3 * outindex + 1] = get_average (inImage.Data, i + 1, scale);
-			Data[3 * outindex + 2] = get_average (inImage.Data, i + 2, scale);
-			outindex++;
-			count++;
-			if (count == (512 / scale)) {
-				i = i + (512)*(scale - 1);
-				count = 0;
+		for (int i = 0; i < width; i += scale) {
+			for (int j = 0; j < height; j += scale) {
+				Data[3 * outindex] = get_average(inImage.Data, ((3 * 512 * i) + (3 * j)), scale);
+				Data[3 * outindex + 1] = get_average(inImage.Data, ((3 * 512 * i) + ((3*j)+1)), scale);
+				Data[3 * outindex + 2] = get_average(inImage.Data, ((3 * 512 * i) + ((3 * j) + 2)), scale);
+				outindex++;
 			}
 		}
 	}
@@ -205,16 +200,16 @@ void intersection(float x1, float y1, float x2, float y2, float *newx, float *ne
 	float lx1, ly1, lx2, ly2;
 
 	if (angle > 0 && angle <= 90) {
-		lx1 = 255; ly1 = 0; lx2 = 255; ly2 = 255;
+		lx1 = 511; ly1 = 0; lx2 = 511; ly2 = 511;
 	}
 	else if (angle > 90 && angle <= 180) {
-		lx1 = 0; ly1 = 255; lx2 = 255; ly2 = 255;
+		lx1 = 0; ly1 = 511; lx2 = 511; ly2 = 511;
 	}
 	else if (angle > 180 && angle <= 270) {
-		lx1 = 0; ly1 = 0; lx2 = 0, ly2 = 255;
+		lx1 = 0; ly1 = 0; lx2 = 0, ly2 = 511;
 	}
 	else {
-		lx1 = 0, ly1 = 0; lx2 = 255, ly2 = 0;
+		lx1 = 0, ly1 = 0; lx2 = 511, ly2 = 0;
 	}
 
 
@@ -238,7 +233,7 @@ void intersection(float x1, float y1, float x2, float y2, float *newx, float *ne
 bool MyImage::CreatImageCanv(int line)
 {	
 	// Allocate Data structure and copy
-	Data = new char[Width*Height*3];
+	Data = new char[Width*Height*3+10];
 	float x1, y1, x2, y2;
 
 	for (int i = 0; i < Height*Width; i++)
@@ -253,16 +248,16 @@ bool MyImage::CreatImageCanv(int line)
 	int height = Height;
 
 	
-	x1 = 128;  y1 = 128; x2 = 256; y2 = 0;
-	draw_helper(Data, 0, 0, 255, 0, 512, 512);
-	draw_helper(Data, 255, 0, 255, 255, 512, 512);
-	draw_helper(Data, 0, 255, 255, 255, 512, 512);
-	draw_helper(Data, 0, 0, 0, 255, 512, 512);
+	x1 = 256;  y1 = 256; x2 = 511; y2 = 0;
+	draw_helper(Data, 0, 0, 511, 0, 512, 512);
+	draw_helper(Data, 511, 0, 511, 511, 512, 512);
+	draw_helper(Data, 0, 511, 511, 511, 512, 512);
+	draw_helper(Data, 0, 0, 0, 511, 512, 512);
 
 	for (int i = 1; i <= line; i++) {
 		float radian = (0.01746031746 * 360 * i)/line ;
 		draw_helper(Data, x1, y1, x2, y2, width, height);
-		x1 = 128;  y1 = 128; x2 = 255; y2 = 0;
+		x1 = 256;  y1 = 256; x2 = 511; y2 = 0;
 		rotate_point(x1, y1, radian, &x2, &y2);
 		intersection(x1, y1, x2, y2, &x2, &y2, i*360/line);
 		if (x2 < 0 || y2 < 0)
