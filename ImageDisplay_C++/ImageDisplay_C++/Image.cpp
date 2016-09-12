@@ -248,14 +248,14 @@ bool MyImage::CreatImageCanv(int line)
 	int height = Height;
 
 	
-	x1 = 256;  y1 = 256; x2 = 511; y2 = 0;
+	x1 = 256;  y1 = 256; x2 = 512; y2 = 0;
 	draw_helper(Data, 0, 0, 511, 0, 512, 512);
 	draw_helper(Data, 511, 0, 511, 511, 512, 512);
 	draw_helper(Data, 0, 511, 511, 511, 512, 512);
 	draw_helper(Data, 0, 0, 0, 511, 512, 512);
 
 	for (int i = 1; i <= line; i++) {
-		float radian = (0.01746031746 * 360 * i)/line ;
+		float radian = (22 * 2 * i)/(line*7.0) ;
 		draw_helper(Data, x1, y1, x2, y2, width, height);
 		x1 = 256;  y1 = 256; x2 = 511; y2 = 0;
 		rotate_point(x1, y1, radian, &x2, &y2);
