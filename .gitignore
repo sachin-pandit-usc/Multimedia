@@ -66,3 +66,8 @@ ImageDisplay_C++/ImageDisplay_C++/Backup7/Image.sln
 ImageDisplay_C++/ImageDisplay_C++/Backup6/Image.sln
 ImageDisplay_C++/ImageDisplay_C++/Backup3/Image.sln
 *.suo
+*.exe
+*.ilk
+*.obj
+*.pdb
+ImageDisplay_C++/ImageDisplay_C++/Image.vcxproj.user

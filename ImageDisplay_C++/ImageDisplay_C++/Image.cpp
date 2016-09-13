@@ -57,11 +57,11 @@ char get_average(char *Data, int index, int scale) {
 }
 
 
-void MyImage::copy(const MyImage &inImage, int scale, float alias) {
+void MyImage::copy(const MyImage &inImage, float scale, float alias) {
 	int width = inImage.Height;
 	int height = inImage.Height;
 	int outindex = 0;
-	Data = new char[((512 / scale)+1) * ((512 / scale)+1) * 3];
+	Data = new char[((512 / (float)scale)+1) * ((512 / (float)scale)+1) * 3];
 	strcpy((char *)inImage.ImagePath, ImagePath);
 
 	if (alias == 0) {
@@ -227,6 +227,10 @@ void intersection(float x1, float y1, float x2, float y2, float *newx, float *ne
 	}
 }
 
+double round(double d)
+{
+	return floor(d + 0.5);
+}
 
 // MyImage::CreatImageCanv
 // Function to create white image with two dots connected
@@ -256,10 +260,14 @@ bool MyImage::CreatImageCanv(int line)
 
 	for (int i = 1; i <= line; i++) {
 		float radian = (22 * 2 * i)/(line*7.0) ;
-		draw_helper(Data, x1, y1, x2, y2, width, height);
+ 		draw_helper(Data, x1, y1, x2, y2, width, height);
 		x1 = 256;  y1 = 256; x2 = 511; y2 = 0;
 		rotate_point(x1, y1, radian, &x2, &y2);
 		intersection(x1, y1, x2, y2, &x2, &y2, i*360/line);
+		x2 = round(x2);
+		if (x2 == 512)
+			x2 = 511;
+		y2 = round(y2);
 		if (x2 < 0 || y2 < 0)
 			break;
 		/*

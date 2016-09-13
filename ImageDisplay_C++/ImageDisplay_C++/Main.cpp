@@ -63,8 +63,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		//return FALSE;
 	}
 	else {
-		outImage.setWidth(512/scale);
-		outImage.setHeight(512/scale);
+		outImage.setWidth(512/(float)scale);
+		outImage.setHeight(512/(float)scale);
 		outImage.copy(inImage, scale, alias);
 	}
 
