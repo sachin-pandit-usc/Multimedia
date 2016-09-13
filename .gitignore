@@ -45,3 +45,24 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+*.sln
+*.htm
+*.tlog
+*.idb
+*.sln
+*.obj
+*.opendb
+*.ipch
+*.suo
+ImageDisplay_C++/ImageDisplay_C++/Backup9/Image.sln
+*.sln
+*.log
+*.sdf
+*.filters
+*.vcxproj
+*.dsw
+ImageDisplay_C++/ImageDisplay_C++/Backup8/Image.sln
+ImageDisplay_C++/ImageDisplay_C++/Backup7/Image.sln
+ImageDisplay_C++/ImageDisplay_C++/Backup6/Image.sln
+ImageDisplay_C++/ImageDisplay_C++/Backup3/Image.sln
+*.suo
