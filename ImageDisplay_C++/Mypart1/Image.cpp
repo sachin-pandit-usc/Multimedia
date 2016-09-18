@@ -57,11 +57,11 @@ char get_average(char *Data, int index, int scale) {
 }
 
 
-void MyImage::copy(const MyImage &inImage, float scale, float alias) {
+void MyImage::copy(const MyImage &inImage, int scale, float alias) {
 	int width = inImage.Height;
 	int height = inImage.Height;
 	int outindex = 0;
-	Data = new char[((512 / (float)scale)+1) * ((512 / (float)scale)+1) * 3];
+	Data = new char[((512 /scale)+1) * ((512 /scale)+1) * 3];
 	strcpy((char *)inImage.ImagePath, ImagePath);
 
 	if (alias == 0) {

@@ -25,11 +25,11 @@ TCHAR szWindowClass[MAX_LOADSTRING];			// The title bar text
 
 // Foward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
+int                 scale;
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
-
-
+int                 calibrate(float scale_temp);
 
 // Main entry point for a windows application
 int APIENTRY WinMain(HINSTANCE hInstance,
@@ -42,9 +42,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 	// Read in the image and its copy
 	int line, alias;
-	float scale;
+	float scale_temp;
 	char ImagePath[_MAX_PATH];
-	sscanf(lpCmdLine, "%d %f %d", &line, &scale, &alias);
+	sscanf(lpCmdLine, "%d %f %d", &line, &scale_temp, &alias);
 	inImage.setWidth(512);
 	inImage.setHeight(512);
 	/*
@@ -57,14 +57,15 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	{
 	*/
 	inImage.setImagePath("part1.rgb");
-	if ( !inImage.CreatImageCanv(line) )
+	if ( !inImage.CreatImageCanv(line))
 	{ 
 		AfxMessageBox( "Could not create image\nUsage - Image.exe image.rgb w h");
 		//return FALSE;
 	}
 	else {
-		outImage.setWidth(512/(float)scale);
-		outImage.setHeight(512/(float)scale);
+		scale = calibrate(scale_temp);
+		outImage.setWidth(512/scale);
+		outImage.setHeight(512/scale);
 		outImage.copy(inImage, scale, alias);
 	}
 
@@ -159,6 +160,46 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    UpdateWindow(hWnd);
 
    return TRUE;
+}
+
+
+int calibrate(float scale_temp) {
+	int scale;
+
+	scale = (int)scale_temp;
+	if (512 % scale == 0) {
+		return scale;
+	}
+	else {
+		int left = scale;
+		int right = scale;
+
+		while (left > 0 && right < 511) {
+			left--;
+			right++;
+			if (512 % left == 0) {
+				return left;
+			}
+			if (512 % right == 0) {
+				return right;
+			}
+		}
+		if (left == 0) {
+			while (right < 511) {
+				if (512 % right == 0) {
+					return right;
+				}
+			}
+		}
+		if (right == 0) {
+			while (left > 0) {
+				if (512 % left == 0) {
+					return left;
+				}
+			}
+		}
+	}
+	return scale;
 }
 
 

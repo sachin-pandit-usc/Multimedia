@@ -48,7 +48,7 @@ public:
 	MyImage & operator= (const MyImage & otherImage);
 
 	// Reader & Writer functions
-	void    copy(const MyImage &inImage, int scale, float alias);
+	void    copy(const MyImage &inImage, float scale, float alias);
 	void	setWidth( const int w)  { Width = w; }; 
 	void	setHeight(const int h) { Height = h; }; 
 	void	setImageData( const char *img ) { Data = (char *)img; };
@@ -57,6 +57,7 @@ public:
 	int		getHeight() { return Height; };
 	char*	getImageData() { return Data; };
 	char*	getImagePath() { return ImagePath; }
+	void    create_data();
 
 	// Input Output operations
 	bool	ReadImage();

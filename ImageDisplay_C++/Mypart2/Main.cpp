@@ -22,7 +22,7 @@ HINSTANCE		hInst;							// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// The title bar text
 float rev;
-int fps;
+float fps;
 int line;
 
 
@@ -46,7 +46,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	// Read in the image and its copy
 	int alias;
 	char ImagePath[_MAX_PATH];
-	sscanf(lpCmdLine, "%d %f %d", &line, &rev, &fps);
+	sscanf(lpCmdLine, "%d %f %f", &line, &rev, &fps);
 	inImage.setWidth(512);
 	inImage.setHeight(512);
 	/*
@@ -58,6 +58,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	else
 	{
 	*/
+	inImage.create_data();
 	inImage.setImagePath("part1.rgb");
 	if ( !inImage.CreatImageCanv(line, 0))
 	{ 
@@ -67,7 +68,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	else {
 		outImage.setWidth(512);
 		outImage.setHeight(512);
-		outImage.copy(inImage, 1, 0);
 	}
 
 	// Initialize global strings
@@ -255,35 +255,39 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				float frame_time = 1000.0 / (float) fps;
 				float frame_current;
 				int frame_count = 1;	
-
-				for (int i = 0; i < loop_inc*360; i+=loop_inc) {
-					sleep_time = (1000.0 * loop_inc)/ (rev * 360.0);
-					start = clock();
-					inImage.CreatImageCanv(line, i%360);
-					outImage.copy(inImage, 1, 0);
-					sprintf(text, "Original image (Left)  Image after modification (Right) %f\n", duration);
-					DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
-					strcpy(text, "\nUpdate program with your code to modify input image");
-					DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
-
-					
-					SetDIBitsToDevice(hdc,
-						0, 100, inImage.getWidth(), inImage.getHeight(),
-						0, 0, 0, inImage.getHeight(),
-						inImage.getImageData(), &bmi, DIB_RGB_COLORS);
+				outImage.create_data();
+				inImage.create_data();
+				while (true) {
+					int i = 0;
+					for (i = 0; i < loop_inc * 360; i += loop_inc) {
+						sleep_time = (1000.0 * loop_inc) / (rev * 360.0);
+						start = clock();
+						inImage.CreatImageCanv(line, i % 360);
+						outImage.copy(inImage, 1, 0);
+						sprintf(text, "Original image (Left)  Image after modification (Right) %f\n", duration);
+						DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
+						strcpy(text, "\nUpdate program with your code to modify input image");
+						DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
 
 
-					frame_current = (clock() - frame_start) / (double)CLOCKS_PER_SEC;
-					if ((frame_current*1000.0) > (frame_count * frame_time)) {
 						SetDIBitsToDevice(hdc,
-							inImage.getWidth() + 50, 100, outImage.getWidth(), outImage.getHeight(),
-							0, 0, 0, outImage.getHeight(),
-							outImage.getImageData(), &bmi1, DIB_RGB_COLORS);
-						frame_count++;
-					}
-					duration = (clock() - start) / (double)CLOCKS_PER_SEC;
-					if (duration * 1000 < sleep_time) {
-						Sleep(sleep_time - (duration * 1000));
+							0, 100, inImage.getWidth(), inImage.getHeight(),
+							0, 0, 0, inImage.getHeight(),
+							inImage.getImageData(), &bmi, DIB_RGB_COLORS);
+
+
+						frame_current = (clock() - frame_start) / (double)CLOCKS_PER_SEC;
+						if ((frame_current*1000.0) > (frame_count * frame_time)) {
+							SetDIBitsToDevice(hdc,
+								inImage.getWidth() + 50, 100, outImage.getWidth(), outImage.getHeight(),
+								0, 0, 0, outImage.getHeight(),
+								outImage.getImageData(), &bmi1, DIB_RGB_COLORS);
+							frame_count++;
+						}
+						duration = (clock() - start) / (double)CLOCKS_PER_SEC;
+						if (duration * 1000 < sleep_time) {
+							Sleep(sleep_time - (duration * 1000));
+						}
 					}
 				}
 				EndPaint(hWnd, &ps);

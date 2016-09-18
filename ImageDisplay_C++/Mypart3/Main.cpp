@@ -22,16 +22,17 @@ HINSTANCE		hInst;							// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// The title bar text
 float rev;
-int fps;
+float fps;
 int line;
-float scale;
-float alias;
+int scale;
+int alias;
 
 // Foward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+int                 calibrate(float scale_temp);
 
 
 
@@ -46,7 +47,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 	// Read in the image and its copy
 	char ImagePath[_MAX_PATH];
-	sscanf(lpCmdLine, "%d %f %d %f %f", &line, &rev, &fps, &scale, &alias);
+	float scale_temp;
+	sscanf(lpCmdLine, "%d %f %f %f %d", &line, &rev, &fps, &scale_temp, &alias);
 	inImage.setWidth(512);
 	inImage.setHeight(512);
 	/*
@@ -58,6 +60,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	else
 	{
 	*/
+	inImage.create_data();
 	inImage.setImagePath("part1.rgb");
 	if ( !inImage.CreatImageCanv(line, 0))
 	{ 
@@ -65,9 +68,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		//return FALSE;
 	}
 	else {
+		scale = calibrate(scale_temp);
 		outImage.setWidth(512/(float)scale);
 		outImage.setHeight(512/(float)scale);
-		outImage.copy(inImage, scale, alias);
 	}
 
 	// Initialize global strings
@@ -96,6 +99,44 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	return msg.wParam;
 }
 
+int calibrate(float scale_temp) {
+	int scale;
+
+	scale = (int)scale_temp;
+	if (512 % scale == 0) {
+		return scale;
+	}
+	else {
+		int left = scale;
+		int right = scale;
+
+		while (left > 0 && right < 511) {
+			left--;
+			right++;
+			if (512 % left == 0) {
+				return left;
+			}
+			if (512 % right == 0) {
+				return right;
+			}
+		}
+		if (left == 0) {
+			while (right < 511) {
+				if (512 % right == 0) {
+					return right;
+				}
+			}
+		}
+		if (right == 0) {
+			while (left > 0) {
+				if (512 % left == 0) {
+					return left;
+				}
+			}
+		}
+	}
+	return scale;
+}
 
 
 //
@@ -255,35 +296,42 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				float frame_time = 1000.0 / (float) fps;
 				float frame_current;
 				int frame_count = 1;	
+				outImage.create_data();
+				inImage.create_data();
+				int rot_count = 0;
+				while (true) {
+					int i = 0;
+					rot_count = 0;
+					for (i = 0; i < loop_inc * 360; i += loop_inc) {
+						rot_count++;
+						sleep_time = (1000.0 * loop_inc) / (rev * 360.0);
+						start = clock();
+						inImage.CreatImageCanv(line, i % 360);
+						outImage.copy(inImage, scale, alias);
+						sprintf(text, "Original image (Left)  Image after modification (Right) %f\n", duration);
+						DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
+						strcpy(text, "\nUpdate program with your code to modify input image");
+						DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
 
-				for (int i = 0; i < loop_inc*360; i+=loop_inc) {
-					sleep_time = (1000.0 * loop_inc)/ (rev * 360.0);
-					start = clock();
-					inImage.CreatImageCanv(line, i%360);
-					outImage.copy(inImage, scale, alias);
-					sprintf(text, "Original image (Left)  Image after modification (Right) %f\n", duration);
-					DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
-					strcpy(text, "\nUpdate program with your code to modify input image");
-					DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
 
-					
-					SetDIBitsToDevice(hdc,
-						0, 100, inImage.getWidth(), inImage.getHeight(),
-						0, 0, 0, inImage.getHeight(),
-						inImage.getImageData(), &bmi, DIB_RGB_COLORS);
-
-
-					frame_current = (clock() - frame_start) / (double)CLOCKS_PER_SEC;
-					if ((frame_current*1000.0) > (frame_count * frame_time)) {
 						SetDIBitsToDevice(hdc,
-							inImage.getWidth() + 50, 100, outImage.getWidth(), outImage.getHeight(),
-							0, 0, 0, outImage.getHeight(),
-							outImage.getImageData(), &bmi1, DIB_RGB_COLORS);
-						frame_count++;
-					}
-					duration = (clock() - start) / (double)CLOCKS_PER_SEC;
-					if (duration * 1000 < sleep_time) {
-						Sleep(sleep_time - (duration * 1000));
+							0, 100, inImage.getWidth(), inImage.getHeight(),
+							0, 0, 0, inImage.getHeight(),
+							inImage.getImageData(), &bmi, DIB_RGB_COLORS);
+
+
+						frame_current = (clock() - frame_start) / (double)CLOCKS_PER_SEC;
+						if ((alias == 1 && (rot_count % 5 == 0)) || (frame_current*1000.0) > (frame_count * frame_time)) {
+							SetDIBitsToDevice(hdc,
+								inImage.getWidth() + 50, 100, outImage.getWidth(), outImage.getHeight(),
+								0, 0, 0, outImage.getHeight(),
+								outImage.getImageData(), &bmi1, DIB_RGB_COLORS);
+							frame_count++;
+						}
+						duration = (clock() - start) / (double)CLOCKS_PER_SEC;
+						if (duration * 1000 < sleep_time) {
+							Sleep(sleep_time - (duration * 1000));
+						}
 					}
 				}
 				EndPaint(hWnd, &ps);
