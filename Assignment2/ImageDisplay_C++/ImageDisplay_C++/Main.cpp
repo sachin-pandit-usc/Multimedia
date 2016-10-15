@@ -45,6 +45,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	sscanf(lpCmdLine, "%s %d %d", &ImagePath, &w, &h);
 	inImage.setWidth(w);
 	inImage.setHeight(h);
+	inImage.setQuantValue(1);
 	if ( strstr(ImagePath, ".rgb" )==NULL )
 	{ 
 		AfxMessageBox( "Image has to be a '.rgb' file\nUsage - Image.exe image.rgb w h");
@@ -58,12 +59,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			AfxMessageBox( "Could not read image\nUsage - Image.exe image.rgb w h");
 			//return FALSE;
 		}
-		else {
+		else
 			outImage = inImage;
-			outImage.yprpb();
-			outImage.DCT();
-
-		}
+			outImage.convertRGBToYPbPr();
+			outImage.generateDCT();
+			outImage.convertYPbPrtoRGB();
 	}
 
 	// Initialize global strings
