@@ -82,9 +82,9 @@ void MyImage::convertYPbPrtoRGB() {
 		float r = (float)(1.000 * Y) + (0.000 * Pb) + (1.402 * Pr);
 		float g = (float)(1.000 * Y) - (0.344 * Pb) - (0.714 * Pr);
 		float b = (float)(1.000 * Y) + (1.772 * Pb) + (0.000 * Pr);
-		rbgOutputValues[3 * i] = r;
-		rbgOutputValues[3 * i + 1] = g;
-		rbgOutputValues[3 * i + 2] = b;
+		rbgOutputValues[3 * i] = (int) r;
+		rbgOutputValues[3 * i + 1] = (int) g;
+		rbgOutputValues[3 * i + 2] = (int) b;
 	}
 	for (int i = 0; i<(Height*Width * 3); i++)
 	{
@@ -93,12 +93,12 @@ void MyImage::convertYPbPrtoRGB() {
 }
 
 void MyImage::convertRGBToYPbPr() {
-	float r, g, b;
-	char* newData = new char[Width*Height * 3];
+	int r, g, b;
+	float* newData = new float[Width*Height * 3];
 	for (int i = 0; i < Height * Width; i++) {
-		r = Data[3 * i];
-		g = Data[3 * i + 1];
-		b = Data[3 * i + 2];
+		r = (int) Data[3 * i];
+		g = (int) Data[3 * i + 1];
+		b = (int) Data[3 * i + 2];
 		float Y = (float)(0.299 * r) + (0.587 * g) + (0.114 * b);
 		float Pb = (float)(-0.169 * r) - (0.331 * g) + (0.5 * b);
 		float Pr = (float)(0.5 * r) - (0.419 * g) - (0.081 * b);
@@ -109,7 +109,7 @@ void MyImage::convertRGBToYPbPr() {
 	convData = convertTo2D(newData, Height, Width);
 }
 
-float** MyImage::convertTo2D(char* matrix, int height, int width) {
+float** MyImage::convertTo2D(float* matrix, int height, int width) {
 
 	int val = width * 3;
 	convData = new float*[height];
@@ -135,7 +135,7 @@ void MyImage::DCT(float** resBlock)
 	}
 	for (int u = 0; u < 8; ++u) {
 		for (int v = 0; v < 8; ++v) {
-			dctCoeff[u][v] = 0;
+			dctCoeff[u][v] = 0.0;
 			float dct = 0;
 			for (int x = 0; x < 8; x++) {
 				for (int y = 0; y < 8; y++) {
@@ -166,7 +166,7 @@ void MyImage::DCT(float** resBlock)
 				cv = 1;
 			}
 			*/
-			dctCoeff[u][v] = (1 / (float) 4) * cu * cv * dct;
+			dctCoeff[u][v] = (1 / (float) 4.0) * cu * cv * dct;
 		}
 	}
 }
@@ -326,7 +326,7 @@ void MyImage::generateDCT() {
 			for (int k = 0; k < 3; k++) {
 				constructBlock(convData, resBlock, i, 3*j + k, 8, 8);
 				DCT(resBlock);
-				quantizedMatrix = zigZagTraversal(dctCoeff, 3);
+				quantizedMatrix = zigZagTraversal(dctCoeff, 15);
 				idct(quantizedMatrix);
 				fillInFinalMatrix(i, 3*j + k, 8, 8);
 			}

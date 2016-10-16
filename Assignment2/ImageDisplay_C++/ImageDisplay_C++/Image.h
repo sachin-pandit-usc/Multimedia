@@ -57,7 +57,7 @@ public:
 	void convertTo1D(float ** convData);
 	void convertYPbPrtoRGB();
 	void convertRGBToYPbPr();
-	float** convertTo2D(char * matrix, int height, int width);
+	float** convertTo2D(float* matrix, int height, int width);
 
 	void DCT(float ** resBlock);
 
