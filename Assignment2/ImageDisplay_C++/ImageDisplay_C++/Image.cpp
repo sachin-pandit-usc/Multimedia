@@ -44,6 +44,16 @@ MyImage::MyImage(MyImage *otherImage)
 
 }
 
+float** allocate_matrix(int height, int width) {
+	float** temp;
+
+	temp = new float*[height];
+	for (int i = 0; i < width; i++) {
+		temp[i] = new float[width];
+	}
+
+	return temp;
+}
 
 void MyImage::fillInFinalMatrix(int offsetX, int offsetY) {
 	for (int i = 0; i < 8; i++) {
@@ -154,42 +164,48 @@ void MyImage::RGB_to_YPRPB() {
 	}
 }
 
-void MyImage::DCT(float** resBlock)
+float get_cu_cv(int value) {
+	float temp;
+
+	if (value == 0) {
+		temp = 1 / (float)sqrt(2);
+	}
+	else {
+		temp = 1.0;
+	}
+	return temp;
+}
+
+
+float get_dct_single(float** resBlock, int u, int v) {
+	float dct_val = 0;
+	for (int x = 0; x < 8; x++) {
+		for (int y = 0; y < 8; y++) {
+			dct_val += resBlock[x][y] * cos(((2 * x + 1) * u * 22) / (float)(16 * 7)) * cos(((2 * y + 1) * v * 22) / (float)(16 * 7));
+		}
+	}
+	return dct_val;
+}
+
+void MyImage::calculate_DCT(float** resBlock)
 {
 	float cu = 0;
 	float cv = 0;
-	dctCoeff = new float*[8];
-	for (int i = 0; i < 8; i++) {
-		dctCoeff[i] = new float[8];
-	}
+	float dct_val = 0;
+
+	quantizedMatrix = allocate_matrix(8, 8);
+	dct_matrix = allocate_matrix(8, 8);
+	
 	for (int u = 0; u < 8; ++u) {
 		for (int v = 0; v < 8; ++v) {
-			dctCoeff[u][v] = 0;
-			float dct = 0;
-			for (int x = 0; x < 8; x++) {
-				for (int y = 0; y < 8; y++) {
-					dct += resBlock[x][y] * cos(((2 * x + 1) * u * 22) / (float)(16 * 7)) * cos(((2 * y + 1) * v * 22) / (float)(16 * 7));
-					/*dctCoeff[u][v] += resBlock[i][j] * cos(M_PI / ((float)8)*(i + 1.0 / 2.0)*u)*cos(M_PI / ((float)8)*(j + 1.0 / 2.0)*v);*/
-				}
-			}
-
-			if (0 == u) {
-				cu = 1 / (float)sqrt(2);
-			}
-			else {
-				cu = 1.0;
-			}
-
-			if (0 == v) {
-				cv = 1 / (float)sqrt(2);
-			}
-			else {
-				cv = 1.0;
-			}
-
-			dctCoeff[u][v] = (1 / (float)4) * cu * cv * dct;
+			dct_matrix[u][v] = 0;
+			dct_val = get_dct_single(resBlock, u, v);
+			cu = get_cu_cv(u);
+			cv = get_cu_cv(v);
+			dct_matrix[u][v] = (1 / (float)4) * cu * cv * dct_val;
 		}
 	}
+	zigZagTraversal(15);
 }
 
 void MyImage::idct(float** DCTMatrix) {
@@ -227,22 +243,9 @@ void MyImage::idct(float** DCTMatrix) {
 	}
 }
 
-float** MyImage::zigZagTraversal(float** dctCoeff, int diagonal) {
+void MyImage::zigZagTraversal(int diagonal) {
 
 	int dimension = 8;
-	quantizedMatrix = new float*[dimension];
-
-	for (int i = 0; i < dimension; i++) {
-		quantizedMatrix[i] = new float[dimension];
-	}
-
-	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 8; j++) {
-			printf("%d ", dctCoeff[i][j]);
-		}
-		printf("\n");
-	}
-
 	int lastValue = dimension * dimension - 1;
 	int currNum = 0;
 	int currDiag = 0;
@@ -251,6 +254,8 @@ float** MyImage::zigZagTraversal(float** dctCoeff, int diagonal) {
 	int i;
 	int row;
 	int col;
+
+	quantizedMatrix = allocate_matrix(8, 8);
 
 	do
 	{
@@ -278,28 +283,18 @@ float** MyImage::zigZagTraversal(float** dctCoeff, int diagonal) {
 				col = loopTo - i + loopFrom;
 			}
 			if (currDiag < diagonal)
-				quantizedMatrix[row][col] = dctCoeff[row][col];
+				quantizedMatrix[row][col] = dct_matrix[row][col];
 			else
 				quantizedMatrix[row][col] = 0;
 		}
 
 		currDiag++;
 	} while (currDiag <= lastValue);
-	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 8; j++) {
-			printf("%d ", quantizedMatrix[i][j]);
-		}
-		printf("\n");
-	}
-
-	return quantizedMatrix;
+	idct (quantizedMatrix);
 }
 
 float** get_block(float** yprpb_matrix, int start_x, int start_y) {
-	float** block = new float*[8];
-	for (int i = 0; i < 8; i++) {
-		block[i] = new float[8];
-	}
+	float** block = allocate_matrix(8, 8);
 
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
@@ -310,7 +305,6 @@ float** get_block(float** yprpb_matrix, int start_x, int start_y) {
 }
 
 void MyImage::calculate_DCT() {
-	float** quantizedMatrix = new float*[8];
 	float** block;
 
 	finalData = new float*[Height];
@@ -318,17 +312,11 @@ void MyImage::calculate_DCT() {
 		finalData[j] = new float[Width * 3];
 	}
 
-	for (int i = 0; i < 8; i++) {
-		quantizedMatrix[i] = new float[8];
-	}
-
 	for (int i = 0; i < Height; i = i + 8) {
 		for (int j = 0; j < Width; j = j + 8) {
 			for (int k = 0; k < 3; k++) {
 				block = get_block (yprpb_matrix, i, 3 * j + k);
-				DCT(block);
-				quantizedMatrix = zigZagTraversal(dctCoeff, 15);
-				idct(quantizedMatrix);
+				calculate_DCT(block);
 				fillInFinalMatrix(i, 3 * j + k);
 			}
 		}

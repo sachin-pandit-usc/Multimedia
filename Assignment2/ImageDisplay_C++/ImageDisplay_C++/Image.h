@@ -37,13 +37,13 @@ private:
 	int		Height;					// Height of Image
 	char	ImagePath[_MAX_PATH];	// Image location
 	char*	Data;					// RGB data of the image
-	float** yprpb_matrix;				// 2D Matrix of YPbPr data of the image
-	float** dctCoeff;				// 8*8 block of DCT Coeffecients
-	float** idctCoeff;				// 8*8 block of iDCT Coeffecient
-	float** quantizedMatrix;		// 8*8 block that holds quantized values based on input parameter n
-	float**	finalData;				// Quantized Data of the image
-	char*	outputData;				// Output 1D YPbPr Data values
-	char*	rbgOutputValues;		// Output 1D RGB Data values
+	float** yprpb_matrix;				
+	float** dct_matrix;
+	float** idctCoeff;				
+	float** quantizedMatrix;		
+	float**	finalData;				
+	char*	outputData;				
+	char*	rbgOutputValues;		
 	int		QuantValue;
 
 public:
@@ -80,13 +80,12 @@ public:
 	bool	Modify();
 
 	// Calculations
-	void	generateZigZag(int dim);
 	void	convertTo1D(float ** convData);
 	void	YPRPB_to_RGB();
 	void	RGB_to_YPRPB();
-	void	DCT(float ** resBlock);
+	void	calculate_DCT(float ** resBlock);
 	void	idct(float ** DCTMatrix);
-	float** zigZagTraversal(float ** dctCoeff, int diagonal);
+	void    zigZagTraversal(int diagonal);
 	void	calculate_DCT();
 	void	fillInFinalMatrix(int offsetX, int offsetY);
 };
