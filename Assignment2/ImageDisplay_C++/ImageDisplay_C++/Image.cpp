@@ -45,32 +45,25 @@ MyImage::MyImage(MyImage *otherImage)
 }
 
 
-void MyImage::fillInFinalMatrix(int offsetX, int offsetY, int xVal, int yVal) {
-	for (int i = 0; i < xVal; i++) {
-		for (int j = 0; j < yVal; j++) {
-			finalData[offsetX + i][offsetY + (j*3)] = idctCoeff[i][j];
+void MyImage::fillInFinalMatrix(int offsetX, int offsetY) {
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
+			finalData[offsetX + i][offsetY + (j * 3)] = idctCoeff[i][j];
 		}
 	}
 }
 
-void MyImage::constructBlock(float** convData, float** result, int offsetX, int offsetY, int xVal, int yVal) {
-	for (int i = 0; i < xVal; i++) {
-		for (int j = 0; j < yVal; j++) {
-			result[i][j] = convData[offsetX + i][offsetY + (j*3)];
-		}
-	}
-}
 
 void MyImage::convertTo1D(float** dataMatrix) {
 	outputData = new char[Width*Height * 3];
 	for (int i = 0; i < Height; i++) {
 		for (int j = 0; j < Width * 3; j++) {
-			outputData[i * (Width *3) + j] = dataMatrix[i][j];
+			outputData[i * (Width * 3) + j] = dataMatrix[i][j];
 		}
 	}
 }
 
-void MyImage::convertYPbPrtoRGB() {
+void MyImage::YPRPB_to_RGB() {
 	float Y, Pb, Pr;
 	rbgOutputValues = new char[Width*Height * 3];
 	convertTo1D(finalData);
@@ -82,9 +75,9 @@ void MyImage::convertYPbPrtoRGB() {
 		float r = (float)(1.000 * Y) + (0.000 * Pb) + (1.402 * Pr);
 		float g = (float)(1.000 * Y) - (0.344 * Pb) - (0.714 * Pr);
 		float b = (float)(1.000 * Y) + (1.772 * Pb) + (0.000 * Pr);
-		rbgOutputValues[3 * i] = (int) r;
-		rbgOutputValues[3 * i + 1] = (int) g;
-		rbgOutputValues[3 * i + 2] = (int) b;
+		rbgOutputValues[3 * i] = (int)r;
+		rbgOutputValues[3 * i + 1] = (int)g;
+		rbgOutputValues[3 * i + 2] = (int)b;
 	}
 	for (int i = 0; i<(Height*Width * 3); i++)
 	{
@@ -96,37 +89,69 @@ void MyImage::convertYPbPrtoRGB() {
 	}
 }
 
-void MyImage::convertRGBToYPbPr() {
-	int r, g, b;
-	float* newData = new float[Width*Height * 3];
-	for (int i = 0; i < Height * Width; i++) {
-		r = (int) Data[3 * i];
-		g = (int) Data[3 * i + 1];
-		b = (int) Data[3 * i + 2];
-		float Y = (float)(0.299 * r) + (0.587 * g) + (0.114 * b);
-		float Pb = (float)(-0.169 * r) - (0.331 * g) + (0.5 * b);
-		float Pr = (float)(0.5 * r) - (0.419 * g) - (0.081 * b);
-		newData[3 * i] = Y;
-		newData[3 * i + 1] = Pb;
-		newData[3 * i + 2] = Pr;
-	}
-	convData = convertTo2D(newData, Height, Width);
+
+float get_y(int r, int g, int b) {
+	float temp;
+
+	temp = (float)(0.299 * r) + (0.587 * g) + (0.114 * b);
+	return temp;
 }
 
-float** MyImage::convertTo2D(float* matrix, int height, int width) {
 
-	int val = width * 3;
-	convData = new float*[height];
-	for (int i = 0; i < height; i++) {
-		convData[i] = new float[val];
+float get_pb(int r, int g, int b) {
+	float temp;
+
+	temp = (float)(-0.169 * r) - (0.331 * g) + (0.5 * b);
+	return temp;
+}
+
+float get_pr(int r, int g, int b) {
+	float temp;
+
+	temp = (float)(0.5 * r) - (0.419 * g) - (0.081 * b);
+	return temp;
+}
+
+void get_RGB(char *Data, int index, int *r, int *g, int *b) {
+	*r = (int)Data[3 * index];
+	*g = (int)Data[3 * index + 1];
+	*b = (int)Data[3 * index + 2];
+}
+
+void get_yprpb(float *y, float *pb, float *pr, int r, int g, int b) {
+	*y = get_y(r, g, b);
+	*pb = get_pb(r, g, b);
+	*pr = get_pr(r, g, b);
+}
+
+void fill_yprpb(float *yprpb_single, int index, float y, float pb, float pr) {
+	yprpb_single[3 * index] = y;
+	yprpb_single[3 * index + 1] = pb;
+	yprpb_single[3 * index + 2] = pr;
+}
+
+void MyImage::RGB_to_YPRPB() {
+	int r, g, b;
+	float y, pb, pr;
+	float *yprpb_single;
+
+	yprpb_single = new float[Width*Height * 3];
+	yprpb_matrix = new float*[Height];
+	for (int i = 0; i < Height; i++) {
+		yprpb_matrix[i] = new float[Width*3];
 	}
 
-	for (int i = 0; i < height; i++) {
-		for (int j = 0; j < width * 3; j++) {
-			convData[i][j] = (float)matrix[i * (width*3) + j];
+	for (int i = 0; i < Height * Width; i++) {
+		get_RGB(Data, i, &r, &g, &b);
+		get_yprpb(&y, &pb, &pr, r, g, b);
+		fill_yprpb(yprpb_single, i, y, pb, pr);
+	}
+
+	for (int i = 0; i < Height; i++) {
+		for (int j = 0; j < Width * 3; j++) {
+			yprpb_matrix[i][j] = (float)yprpb_single[i * (Width * 3) + j];
 		}
 	}
-	return convData;
 }
 
 void MyImage::DCT(float** resBlock)
@@ -143,34 +168,26 @@ void MyImage::DCT(float** resBlock)
 			float dct = 0;
 			for (int x = 0; x < 8; x++) {
 				for (int y = 0; y < 8; y++) {
-					dct += resBlock[x][y] * cos(((2 * x + 1) * u * 22) / (float) (16*7)) * cos(((2 * y + 1) * v * 22) / (float) (16 * 7));
+					dct += resBlock[x][y] * cos(((2 * x + 1) * u * 22) / (float)(16 * 7)) * cos(((2 * y + 1) * v * 22) / (float)(16 * 7));
 					/*dctCoeff[u][v] += resBlock[i][j] * cos(M_PI / ((float)8)*(i + 1.0 / 2.0)*u)*cos(M_PI / ((float)8)*(j + 1.0 / 2.0)*v);*/
 				}
 			}
 
 			if (0 == u) {
 				cu = 1 / (float)sqrt(2);
-			} else {
+			}
+			else {
 				cu = 1.0;
 			}
 
 			if (0 == v) {
 				cv = 1 / (float)sqrt(2);
-			} else {
+			}
+			else {
 				cv = 1.0;
 			}
 
-			/*
-			if (0 == u && 0 == v) {
-				cu = 1 / (float) sqrt(2);
-				cv = 1 / (float) sqrt(2);
-			}
-			else {
-				cu = 1;
-				cv = 1;
-			}
-			*/
-			dctCoeff[u][v] = (1 / (float) 4) * cu * cv * dct;
+			dctCoeff[u][v] = (1 / (float)4) * cu * cv * dct;
 		}
 	}
 }
@@ -202,45 +219,12 @@ void MyImage::idct(float** DCTMatrix) {
 					else {
 						cv = 1.0;
 					}
-
-					/*
-
-					if (0 == u && 0 == v) {
-						cu = 1 / (float) sqrt(2);
-						cv = 1 / (float) sqrt(2);
-					}
-					else {
-						cu = 1;
-						cv = 1;
-					}
-					*/
-					idct += cu * cv * DCTMatrix[u][v] * cos(((2 * x + 1) * u * 22) / (float) (16 * 7)) * cos(((2 * y + 1) * v * 22) / (float) (16 * 7));
+					idct += cu * cv * DCTMatrix[u][v] * cos(((2 * x + 1) * u * 22) / (float)(16 * 7)) * cos(((2 * y + 1) * v * 22) / (float)(16 * 7));
 				}
 			}
 			idctCoeff[x][y] = idct / (float) 4.0;
 		}
 	}
-
-	/*
-	for (u = 0; u < 8; ++u) {
-		for (v = 0; v < 8; ++v) {
-			idctCoeff[u][v] = 1 / 4.*DCTMatrix[0][0];
-			for (i = 1; i < 8; i++) {
-				idctCoeff[u][v] += 1 / 2.*DCTMatrix[i][0];
-			}
-			for (j = 1; j < 8; j++) {
-				idctCoeff[u][v] += 1 / 2.*DCTMatrix[0][j];
-			}
-
-			for (i = 1; i < 8; i++) {
-				for (j = 1; j < 8; j++) {
-					idctCoeff[u][v] += DCTMatrix[i][j] * cos(M_PI / ((float)8)*(u + 1. / 2.)*i)*cos(M_PI / ((float)8)*(v + 1. / 2.)*j);
-				}
-			}
-			idctCoeff[u][v] *= 2. / ((float)8)*2. / ((float)8);
-		}
-	}
-	*/
 }
 
 float** MyImage::zigZagTraversal(float** dctCoeff, int diagonal) {
@@ -311,28 +295,41 @@ float** MyImage::zigZagTraversal(float** dctCoeff, int diagonal) {
 	return quantizedMatrix;
 }
 
-void MyImage::generateDCT() {
+float** get_block(float** yprpb_matrix, int start_x, int start_y) {
+	float** block = new float*[8];
+	for (int i = 0; i < 8; i++) {
+		block[i] = new float[8];
+	}
 
-	float** resBlock = new float*[8];
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
+			block[i][j] = yprpb_matrix[start_x + i][start_y + (j * 3)];
+		}
+	}
+	return block;
+}
+
+void MyImage::calculate_DCT() {
 	float** quantizedMatrix = new float*[8];
+	float** block;
+
 	finalData = new float*[Height];
 	for (int j = 0; j < Height; j++) {
 		finalData[j] = new float[Width * 3];
 	}
 
 	for (int i = 0; i < 8; i++) {
-		resBlock[i] = new float[8];
 		quantizedMatrix[i] = new float[8];
 	}
 
 	for (int i = 0; i < Height; i = i + 8) {
 		for (int j = 0; j < Width; j = j + 8) {
 			for (int k = 0; k < 3; k++) {
-				constructBlock(convData, resBlock, i, 3*j + k, 8, 8);
-				DCT(resBlock);
+				block = get_block (yprpb_matrix, i, 3 * j + k);
+				DCT(block);
 				quantizedMatrix = zigZagTraversal(dctCoeff, 15);
 				idct(quantizedMatrix);
-				fillInFinalMatrix(i, 3*j + k, 8, 8);
+				fillInFinalMatrix(i, 3 * j + k);
 			}
 		}
 	}
