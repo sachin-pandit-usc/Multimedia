@@ -88,7 +88,11 @@ void MyImage::convertYPbPrtoRGB() {
 	}
 	for (int i = 0; i<(Height*Width * 3); i++)
 	{
-		Data[i] = rbgOutputValues[i];
+		int temp = (int)rbgOutputValues[i];
+		if (temp > 255) {
+			temp = 255;
+		}
+		Data[i] = temp;
 	}
 }
 
@@ -135,11 +139,11 @@ void MyImage::DCT(float** resBlock)
 	}
 	for (int u = 0; u < 8; ++u) {
 		for (int v = 0; v < 8; ++v) {
-			dctCoeff[u][v] = 0.0;
+			dctCoeff[u][v] = 0;
 			float dct = 0;
 			for (int x = 0; x < 8; x++) {
 				for (int y = 0; y < 8; y++) {
-					dct += resBlock[x][y] * cos(((2 * x + 1) * u * M_PI) / (float) 16) * cos(((2 * y + 1) * v * M_PI) / (float) 16);
+					dct += resBlock[x][y] * cos(((2 * x + 1) * u * 22) / (float) (16*7)) * cos(((2 * y + 1) * v * 22) / (float) (16 * 7));
 					/*dctCoeff[u][v] += resBlock[i][j] * cos(M_PI / ((float)8)*(i + 1.0 / 2.0)*u)*cos(M_PI / ((float)8)*(j + 1.0 / 2.0)*v);*/
 				}
 			}
@@ -166,7 +170,7 @@ void MyImage::DCT(float** resBlock)
 				cv = 1;
 			}
 			*/
-			dctCoeff[u][v] = (1 / (float) 4.0) * cu * cv * dct;
+			dctCoeff[u][v] = (1 / (float) 4) * cu * cv * dct;
 		}
 	}
 }
@@ -210,7 +214,7 @@ void MyImage::idct(float** DCTMatrix) {
 						cv = 1;
 					}
 					*/
-					idct += cu * cv * DCTMatrix[u][v] * cos(((2 * x + 1) * u * M_PI) / (float)16) * cos(((2 * y + 1) * v * M_PI) / (float) 16);
+					idct += cu * cv * DCTMatrix[u][v] * cos(((2 * x + 1) * u * 22) / (float) (16 * 7)) * cos(((2 * y + 1) * v * 22) / (float) (16 * 7));
 				}
 			}
 			idctCoeff[x][y] = idct / (float) 4.0;
