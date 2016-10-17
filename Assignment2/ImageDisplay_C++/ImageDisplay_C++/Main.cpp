@@ -60,11 +60,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			AfxMessageBox("Could not read image\nUsage - Image.exe image.rgb w h");
 			//return FALSE;
 		}
-		else
+		else {
 			outImage = inImage;
-		outImage.RGB_to_YPRPB();
-		outImage.generateDCT();
-		outImage.YPRPB_to_RGB();
+			outImage.RGB_to_YPRPB();
+			outImage.init_DCT();
+			outImage.YPRPB_to_RGB();
+		}
 	}
 
 	// Initialize global strings

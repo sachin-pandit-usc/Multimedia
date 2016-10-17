@@ -38,13 +38,13 @@ private:
 	int		Diagonal;				// Diaginal
 	char	ImagePath[_MAX_PATH];	// Image location
 	char*	Data;					// RGB data of the image
-	float** convData;				// 2D Matrix of YPbPr data of the image
-	float** dctCoeff;				// 8*8 block of DCT Coeffecients
-	float** idctCoeff;				// 8*8 block of iDCT Coeffecient
-	float** quantizedMatrix;		// 8*8 block that holds quantized values based on input parameter n
-	float**	finalData;				// Quantized Data of the image
-	char*	final_yprpb;				// Output 1D YPbPr Data values
-	char*	final_rgb;		// Output 1D RGB Data values
+	float** convData;				
+	float** dctCoeff;				
+	float** idctCoeff;				
+	float** quantizedMatrix;		
+	float**	finalData;				
+	char*	final_yprpb;				
+	char*	final_rgb;		
 	int		QuantValue;
 
 public:
@@ -86,12 +86,12 @@ public:
 	void	YPRPB_to_RGB();
 	void	RGB_to_YPRPB();
 	void	array_to_matrix(float * matrix);
-	void	DCT(float ** resBlock);
-	void	idct(float ** DCTMatrix);
-	float** zigZagTraversal(float ** dctCoeff, int diagonal);
-	void	generateDCT();
-	void	fillInFinalMatrix(int offsetX, int offsetY, int xVal, int yVal);
-	void	constructBlock(float ** convData, float ** result, int offsetX, int offsetY, int xVal, int yVal);
+	void	fill_DCT_value(float ** resBlock);
+	void	fill_IDCT_value(float ** DCTMatrix);
+	float** quantize_process(float ** dctCoeff, int diagonal);
+	void	init_DCT();
+	void	fill_rgb_complete(int offsetX, int offsetY);
+	void	get_block(float ** convData, float ** result, int offsetX, int offsetY);
 };
 
 #endif //IMAGE_DISPLAY

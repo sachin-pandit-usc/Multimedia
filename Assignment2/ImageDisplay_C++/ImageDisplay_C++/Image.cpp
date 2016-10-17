@@ -56,17 +56,17 @@ float** allocate_matrix(int height, int width) {
 }
 
 
-void MyImage::fillInFinalMatrix(int offsetX, int offsetY, int xVal, int yVal) {
-	for (int i = 0; i < xVal; i++) {
-		for (int j = 0; j < yVal; j++) {
+void MyImage::fill_rgb_complete(int offsetX, int offsetY) {
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
 			finalData[offsetX + i][offsetY + (j * 3)] = idctCoeff[i][j];
 		}
 	}
 }
 
-void MyImage::constructBlock(float** convData, float** result, int offsetX, int offsetY, int xVal, int yVal) {
-	for (int i = 0; i < xVal; i++) {
-		for (int j = 0; j < yVal; j++) {
+void MyImage::get_block(float** convData, float** result, int offsetX, int offsetY) {
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
 			result[i][j] = convData[offsetX + i][offsetY + (j * 3)];
 		}
 	}
@@ -182,44 +182,72 @@ void MyImage::array_to_matrix(float* matrix) {
 	}
 }
 
-void MyImage::DCT(float** resBlock)
+float get_cu_cv(int value) {
+	float temp;
+
+	if (value == 0) {
+		temp = 1 / (float)sqrt(2);
+	}
+	else {
+		temp = 1.0;
+	}
+	return temp;
+}
+
+float get_dct_single(float** resBlock, int u, int v) {
+	float dct = 0.0;
+
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
+			dct += resBlock[i][j] * cos(((2 * i + 1) * u * M_PI) / (float)16) * cos(((2 * j + 1) * v * M_PI) / (float)16);
+		}
+	}
+	return dct;
+}
+
+void MyImage::fill_DCT_value(float** resBlock)
 {
 	int i, j, u, v;
 	float cu = 0;
 	float cv = 0;
+	float dct = 0;
+
 	dctCoeff = new float*[8];
 	for (int i = 0; i < 8; i++) {
 		dctCoeff[i] = new float[8];
 	}
+
 	for (u = 0; u < 8; ++u) {
 		for (v = 0; v < 8; ++v) {
 			dctCoeff[u][v] = 0;
-			float dct = 0;
-			for (i = 0; i < 8; i++) {
-				for (j = 0; j < 8; j++) {
-					dct += resBlock[i][j] * cos(((2 * i + 1) * u * M_PI) / (float)16) * cos(((2 * j + 1) * v * M_PI) / (float)16);
-				}
-			}
-			if (0 == u) {
-				cu = 1 / (float)sqrt(2);
-			}
-			else {
-				cu = 1.0;
-			}
-
-			if (0 == v) {
-				cv = 1 / (float)sqrt(2);
-			}
-			else {
-				cv = 1.0;
-			}
+			dct = get_dct_single(resBlock, u, v);
+			cu = get_cu_cv(u);
+			cv = get_cu_cv(v);
 			dctCoeff[u][v] = (1 / (float) 4.0) * cu * cv * dct;
 		}
 	}
 }
 
-void MyImage::idct(float** DCTMatrix) {
+float get_idct_value(float** DCTMatrix, int x, int y) {
+	float idct = 0.0;
+	float cu = 0.0;
+	float cv = 0.0;
+
+	for (int u = 0; u < 8; u++) {
+		for (int v = 0; v < 8; v++) {
+			cu = get_cu_cv(u);
+			cv = get_cu_cv(v);
+			idct += cu * cv * DCTMatrix[u][v] * cos(((2 * x + 1) * u * M_PI) / (float)16) * cos(((2 * y + 1) * v * M_PI) / (float)16);
+		}
+	}
+
+	return idct;
+}
+
+void MyImage::fill_IDCT_value(float** DCTMatrix) {
 	int x, y, u, v;
+	float idct = 0.0;
+
 	idctCoeff = new float*[8];
 	for (int i = 0; i < 8; i++) {
 		idctCoeff[i] = new float[8];
@@ -227,87 +255,54 @@ void MyImage::idct(float** DCTMatrix) {
 
 	for (x = 0; x < 8; x++) {
 		for (y = 0; y < 8; y++) {
-			float idct = 0;
-			float cu = 0;
-			float cv = 0;
-			for (int u = 0; u < 8; u++) {
-				for (int v = 0; v < 8; v++) {
-					if (0 == u) {
-						cu = 1 / (float)sqrt(2);
-					}
-					else {
-						cu = 1.0;
-					}
-
-					if (0 == v) {
-						cv = 1 / (float)sqrt(2);
-					}
-					else {
-						cv = 1.0;
-					}
-					idct += cu * cv * DCTMatrix[u][v] * cos(((2 * x + 1) * u * M_PI) / (float)16) * cos(((2 * y + 1) * v * M_PI) / (float)16);
-				}
-			}
+			idct = get_idct_value(DCTMatrix, x, y);
 			idctCoeff[x][y] = idct / (float) 4.0;
 		}
 	}
 }
 
-float** MyImage::zigZagTraversal(float** dctCoeff, int Diagonal) {
+float** MyImage::quantize_process(float** dctCoeff, int Diagonal) {
+	quantizedMatrix = new float*[8];
 
-	int dimension = 8;
-	quantizedMatrix = new float*[dimension];
-
-	for (int i = 0; i < dimension; i++) {
-		quantizedMatrix[i] = new float[dimension];
+	for (int i = 0; i < 8; i++) {
+		quantizedMatrix[i] = new float[8];
 	}
 
-	int lastValue = dimension * dimension - 1;
-	int currNum = 0;
-	int currDiag = 0;
-	int loopFrom;
-	int loopTo;
-	int i;
-	int row;
-	int col;
+	int lastValue = 63, currNum = 0, currDiag = 0;
+	int loopFrom, loopTo, row, col;
 
 	do
 	{
-		if (currDiag < dimension) // if doing the upper-left triangular half
-		{
+		if (currDiag >= 8) {
+			loopFrom = currDiag - 8 + 1;
+			loopTo = 7;
+		} else  {
 			loopFrom = 0;
 			loopTo = currDiag;
 		}
-		else // doing the bottom-right triangular half
-		{
-			loopFrom = currDiag - dimension + 1;
-			loopTo = dimension - 1;
-		}
 
-		for (i = loopFrom; i <= loopTo; i++)
+		for (int i = loopFrom; i <= loopTo; i++)
 		{
-			if (currDiag % 2 == 0) // want to fill upwards
-			{
+			if (currDiag % 2 != 0) {
+				row = i;
+				col = loopTo - i + loopFrom;
+			} else {
 				row = loopTo - i + loopFrom;
 				col = i;
 			}
-			else // want to fill downwards
-			{
-				row = i;
-				col = loopTo - i + loopFrom;
-			}
-			if (currDiag < Diagonal)
-				quantizedMatrix[row][col] = dctCoeff[row][col];
-			else
-				quantizedMatrix[row][col] = 0;
-		}
 
+			if (currDiag >= Diagonal)
+				quantizedMatrix[row][col] = 0;
+			else
+				quantizedMatrix[row][col] = dctCoeff[row][col];
+		}
 		currDiag++;
 	} while (currDiag <= lastValue);
+
 	return quantizedMatrix;
 }
 
-void MyImage::generateDCT() {
+void MyImage::init_DCT() {
 
 	float** resBlock = new float*[8];
 	float** quantizedMatrix = new float*[8];
@@ -324,11 +319,11 @@ void MyImage::generateDCT() {
 	for (int i = 0; i < Height; i = i + 8) {
 		for (int j = 0; j < Width; j = j + 8) {
 			for (int k = 0; k < 3; k++) {
-				constructBlock(convData, resBlock, i, 3 * j + k, 8, 8);
-				DCT(resBlock);
-				quantizedMatrix = zigZagTraversal(dctCoeff, Diagonal);
-				idct(quantizedMatrix);
-				fillInFinalMatrix(i, 3 * j + k, 8, 8);
+				get_block(convData, resBlock, i, 3 * j + k);
+				fill_DCT_value(resBlock);
+				quantizedMatrix = quantize_process(dctCoeff, Diagonal);
+				fill_IDCT_value(quantizedMatrix);
+				fill_rgb_complete(i, 3 * j + k);
 			}
 		}
 	}
