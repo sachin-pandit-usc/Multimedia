@@ -38,11 +38,11 @@ private:
 	int		Diagonal;				// Diaginal
 	char	ImagePath[_MAX_PATH];	// Image location
 	char*	Data;					// RGB data of the image
-	float** convData;				
-	float** dctCoeff;				
-	float** idctCoeff;				
+	float** yprpb_matrix;				
+	float** dct_matrix;				
+	float** idct_matrix;				
 	float** quantizedMatrix;		
-	float**	finalData;				
+	float**	final_DCT_matrix;				
 	char*	final_yprpb;				
 	char*	final_rgb;		
 	int		QuantValue;
@@ -88,10 +88,10 @@ public:
 	void	array_to_matrix(float * matrix);
 	void	fill_DCT_value(float ** resBlock);
 	void	fill_IDCT_value(float ** DCTMatrix);
-	float** quantize_process(float ** dctCoeff, int diagonal);
+	float** quantize_process(float ** dct_matrix, int diagonal);
 	void	init_DCT();
 	void	fill_rgb_complete(int offsetX, int offsetY);
-	void	get_block(float ** convData, float ** result, int offsetX, int offsetY);
+	void	get_block(float ** yprpb_matrix, float ** result, int offsetX, int offsetY);
 };
 
 #endif //IMAGE_DISPLAY

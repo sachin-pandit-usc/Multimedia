@@ -59,15 +59,15 @@ float** allocate_matrix(int height, int width) {
 void MyImage::fill_rgb_complete(int offsetX, int offsetY) {
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
-			finalData[offsetX + i][offsetY + (j * 3)] = idctCoeff[i][j];
+			final_DCT_matrix[offsetX + i][offsetY + (j * 3)] = idct_matrix[i][j];
 		}
 	}
 }
 
-void MyImage::get_block(float** convData, float** result, int offsetX, int offsetY) {
+void MyImage::get_block(float** yprpb_matrix, float** result, int offsetX, int offsetY) {
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
-			result[i][j] = convData[offsetX + i][offsetY + (j * 3)];
+			result[i][j] = yprpb_matrix[offsetX + i][offsetY + (j * 3)];
 		}
 	}
 }
@@ -100,7 +100,7 @@ void MyImage::YPRPB_to_RGB() {
 	final_yprpb = new char[Width*Height * 3];
 	for (int i = 0; i < Height; i++) {
 		for (int j = 0; j < Width * 3; j++) {
-			final_yprpb[i * (Width * 3) + j] = finalData[i][j];
+			final_yprpb[i * (Width * 3) + j] = final_DCT_matrix[i][j];
 		}
 	}
 
@@ -167,9 +167,9 @@ void MyImage::RGB_to_YPRPB() {
 		fill_yprpb(temp_ypbpr, i, y, pb, pr);
 	}
 
-	convData = new float*[Height];
+	yprpb_matrix = new float*[Height];
 	for (int i = 0; i < Height; i++) {
-		convData[i] = new float[Width * 3];
+		yprpb_matrix[i] = new float[Width * 3];
 	}
 	array_to_matrix(temp_ypbpr);
 }
@@ -177,7 +177,7 @@ void MyImage::RGB_to_YPRPB() {
 void MyImage::array_to_matrix(float* matrix) {
 	for (int i = 0; i < Height; i++) {
 		for (int j = 0; j < Width * 3; j++) {
-			convData[i][j] = (float)matrix[i * (Width * 3) + j];
+			yprpb_matrix[i][j] = (float)matrix[i * (Width * 3) + j];
 		}
 	}
 }
@@ -212,18 +212,18 @@ void MyImage::fill_DCT_value(float** resBlock)
 	float cv = 0;
 	float dct = 0;
 
-	dctCoeff = new float*[8];
+	dct_matrix = new float*[8];
 	for (int i = 0; i < 8; i++) {
-		dctCoeff[i] = new float[8];
+		dct_matrix[i] = new float[8];
 	}
 
 	for (u = 0; u < 8; ++u) {
 		for (v = 0; v < 8; ++v) {
-			dctCoeff[u][v] = 0;
+			dct_matrix[u][v] = 0;
 			dct = get_dct_single(resBlock, u, v);
 			cu = get_cu_cv(u);
 			cv = get_cu_cv(v);
-			dctCoeff[u][v] = (1 / (float) 4.0) * cu * cv * dct;
+			dct_matrix[u][v] = (1 / (float) 4.0) * cu * cv * dct;
 		}
 	}
 }
@@ -248,20 +248,20 @@ void MyImage::fill_IDCT_value(float** DCTMatrix) {
 	int x, y, u, v;
 	float idct = 0.0;
 
-	idctCoeff = new float*[8];
+	idct_matrix = new float*[8];
 	for (int i = 0; i < 8; i++) {
-		idctCoeff[i] = new float[8];
+		idct_matrix[i] = new float[8];
 	}
 
 	for (x = 0; x < 8; x++) {
 		for (y = 0; y < 8; y++) {
 			idct = get_idct_value(DCTMatrix, x, y);
-			idctCoeff[x][y] = idct / (float) 4.0;
+			idct_matrix[x][y] = idct / (float) 4.0;
 		}
 	}
 }
 
-float** MyImage::quantize_process(float** dctCoeff, int Diagonal) {
+float** MyImage::quantize_process(float** dct_matrix, int Diagonal) {
 	quantizedMatrix = new float*[8];
 
 	for (int i = 0; i < 8; i++) {
@@ -294,7 +294,7 @@ float** MyImage::quantize_process(float** dctCoeff, int Diagonal) {
 			if (currDiag >= Diagonal)
 				quantizedMatrix[row][col] = 0;
 			else
-				quantizedMatrix[row][col] = dctCoeff[row][col];
+				quantizedMatrix[row][col] = dct_matrix[row][col];
 		}
 		currDiag++;
 	} while (currDiag <= lastValue);
@@ -304,25 +304,25 @@ float** MyImage::quantize_process(float** dctCoeff, int Diagonal) {
 
 void MyImage::init_DCT() {
 
-	float** resBlock = new float*[8];
-	float** quantizedMatrix = new float*[8];
-	finalData = new float*[Height];
+	float** temp_block = new float*[8];
+	float** quantized_matrix = new float*[8];
+	final_DCT_matrix = new float*[Height];
 	for (int j = 0; j < Height; j++) {
-		finalData[j] = new float[Width * 3];
+		final_DCT_matrix[j] = new float[Width * 3];
 	}
 
 	for (int i = 0; i < 8; i++) {
-		resBlock[i] = new float[8];
-		quantizedMatrix[i] = new float[8];
+		temp_block[i] = new float[8];
+		quantized_matrix[i] = new float[8];
 	}
 
 	for (int i = 0; i < Height; i = i + 8) {
 		for (int j = 0; j < Width; j = j + 8) {
 			for (int k = 0; k < 3; k++) {
-				get_block(convData, resBlock, i, 3 * j + k);
-				fill_DCT_value(resBlock);
-				quantizedMatrix = quantize_process(dctCoeff, Diagonal);
-				fill_IDCT_value(quantizedMatrix);
+				get_block(yprpb_matrix, temp_block, i, 3 * j + k);
+				fill_DCT_value(temp_block);
+				quantized_matrix = quantize_process(dct_matrix, Diagonal);
+				fill_IDCT_value(quantized_matrix);
 				fill_rgb_complete(i, 3 * j + k);
 			}
 		}
