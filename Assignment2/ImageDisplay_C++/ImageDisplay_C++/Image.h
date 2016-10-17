@@ -42,7 +42,7 @@ private:
 	float** idctCoeff;				
 	float** quantizedMatrix;		
 	float**	finalData;				
-	char*	outputData;				
+	float*	outputData;				
 	char*	rbgOutputValues;		
 	int		QuantValue;
 
@@ -87,7 +87,7 @@ public:
 	void	idct(float ** DCTMatrix);
 	void    zigZagTraversal(int diagonal);
 	void	calculate_DCT();
-	void	fillInFinalMatrix(int offsetX, int offsetY);
+	void	complete_matrix(int offsetX, int offsetY);
 };
 
 #endif //IMAGE_DISPLAY

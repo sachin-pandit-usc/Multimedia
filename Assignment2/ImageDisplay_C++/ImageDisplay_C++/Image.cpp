@@ -55,7 +55,7 @@ float** allocate_matrix(int height, int width) {
 	return temp;
 }
 
-void MyImage::fillInFinalMatrix(int offsetX, int offsetY) {
+void MyImage::complete_matrix(int offsetX, int offsetY) {
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
 			finalData[offsetX + i][offsetY + (j * 3)] = idctCoeff[i][j];
@@ -63,31 +63,40 @@ void MyImage::fillInFinalMatrix(int offsetX, int offsetY) {
 	}
 }
 
+void fill_ypbpr(float *matrix, int index, float *y, float *pb, float *pr) {
+	*y = matrix[3 * index];
+	*pb = matrix[3 * index + 1];
+	*pr = matrix[3 * index + 2];
+}
 
-void MyImage::convertTo1D(float** dataMatrix) {
-	outputData = new char[Width*Height * 3];
-	for (int i = 0; i < Height; i++) {
-		for (int j = 0; j < Width * 3; j++) {
-			outputData[i * (Width * 3) + j] = dataMatrix[i][j];
-		}
-	}
+void fill_RGB(float *r, float *g, float *b, float y, float pb, float pr) {
+	*r = (float)(1.000 * y) + (0.000 * pb) + (1.402 * pr);
+	*g = (float)(1.000 * y) - (0.344 * pb) - (0.714 * pr);
+	*b = (float)(1.000 * y) + (1.772 * pb) + (0.000 * pr);
+}
+
+void final_matrix(char *matrix, int index, int r, int g, int b) {
+	matrix[3 * index] = (int)r;
+	matrix[3 * index + 1] = (int)g;
+	matrix[3 * index + 2] = (int)b;
 }
 
 void MyImage::YPRPB_to_RGB() {
-	float Y, Pb, Pr;
-	rbgOutputValues = new char[Width*Height * 3];
-	convertTo1D(finalData);
+	float y, pb, pr;
+	float r, g, b;
+
+	rbgOutputValues = new char[Width  *Height * 3];
+	outputData = new float[Width*Height * 3];
+	for (int i = 0; i < Height; i++) {
+		for (int j = 0; j < Width * 3; j++) {
+			outputData[i * (Width * 3) + j] = finalData[i][j];
+		}
+	}
 
 	for (int i = 0; i < Height * Width; i++) {
-		Y = outputData[3 * i];
-		Pb = outputData[3 * i + 1];
-		Pr = outputData[3 * i + 2];
-		float r = (float)(1.000 * Y) + (0.000 * Pb) + (1.402 * Pr);
-		float g = (float)(1.000 * Y) - (0.344 * Pb) - (0.714 * Pr);
-		float b = (float)(1.000 * Y) + (1.772 * Pb) + (0.000 * Pr);
-		rbgOutputValues[3 * i] = (int)r;
-		rbgOutputValues[3 * i + 1] = (int)g;
-		rbgOutputValues[3 * i + 2] = (int)b;
+		fill_ypbpr(outputData, i, &y, &pb, &pr);
+		fill_RGB(&r, &g, &b, y, pb, pr);
+		final_matrix(rbgOutputValues, i, r, g, b);
 	}
 	for (int i = 0; i<(Height*Width * 3); i++)
 	{
@@ -208,36 +217,29 @@ void MyImage::calculate_DCT(float** resBlock)
 	zigZagTraversal(15);
 }
 
+float get_idct_single(float **matrix, int x, int y) {
+	float idct_val = 0;
+	float cu, cv;
+
+	for (int u = 0; u < 8; u++) {
+		for (int v = 0; v < 8; v++) {
+			cu = get_cu_cv(u);
+			cv = get_cu_cv(v);
+			idct_val += cu * cv * matrix[u][v] * cos(((2 * x + 1) * u * 22) / (float)(16 * 7)) * cos(((2 * y + 1) * v * 22) / (float)(16 * 7));
+		}
+	}
+	return idct_val;
+}
+
 void MyImage::idct(float** DCTMatrix) {
 	int i, j, u, v;
-	idctCoeff = new float*[8];
-	for (int i = 0; i < 8; i++) {
-		idctCoeff[i] = new float[8];
-	}
+	float idct;
+
+	idctCoeff = allocate_matrix(8, 8);
 
 	for (int x = 0; x < 8; x++) {
 		for (int y = 0; y < 8; y++) {
-			float idct = 0;
-			float cu = 0;
-			float cv = 0;
-			for (int u = 0; u < 8; u++) {
-				for (int v = 0; v < 8; v++) {
-					if (0 == u) {
-						cu = 1 / (float)sqrt(2);
-					}
-					else {
-						cu = 1.0;
-					}
-
-					if (0 == v) {
-						cv = 1 / (float)sqrt(2);
-					}
-					else {
-						cv = 1.0;
-					}
-					idct += cu * cv * DCTMatrix[u][v] * cos(((2 * x + 1) * u * 22) / (float)(16 * 7)) * cos(((2 * y + 1) * v * 22) / (float)(16 * 7));
-				}
-			}
+			idct = get_idct_single (DCTMatrix, x, y);
 			idctCoeff[x][y] = idct / (float) 4.0;
 		}
 	}
@@ -245,51 +247,40 @@ void MyImage::idct(float** DCTMatrix) {
 
 void MyImage::zigZagTraversal(int diagonal) {
 
-	int dimension = 8;
-	int lastValue = dimension * dimension - 1;
-	int currNum = 0;
-	int currDiag = 0;
-	int loopFrom;
-	int loopTo;
-	int i;
-	int row;
-	int col;
+	int dimension = 8, lastValue = 63, currNum = 0;
+	int currDiag = 0, loopFrom, loopTo, row, col;
 
 	quantizedMatrix = allocate_matrix(8, 8);
 
 	do
 	{
-		if (currDiag < dimension) // if doing the upper-left triangular half
-		{
+		if (currDiag >= dimension) {
+			loopFrom = currDiag - dimension + 1;
+			loopTo = dimension - 1;
+		} else {
 			loopFrom = 0;
 			loopTo = currDiag;
 		}
-		else // doing the bottom-right triangular half
-		{
-			loopFrom = currDiag - dimension + 1;
-			loopTo = dimension - 1;
-		}
 
-		for (i = loopFrom; i <= loopTo; i++)
+		for (int i = loopFrom; i <= loopTo; i++)
 		{
-			if (currDiag % 2 == 0) // want to fill upwards
-			{
+			if (currDiag % 2 == 0) {
+				row = i;
+				col = loopTo - i + loopFrom;
+			} else {
 				row = loopTo - i + loopFrom;
 				col = i;
 			}
-			else // want to fill downwards
-			{
-				row = i;
-				col = loopTo - i + loopFrom;
-			}
-			if (currDiag < diagonal)
-				quantizedMatrix[row][col] = dct_matrix[row][col];
-			else
-				quantizedMatrix[row][col] = 0;
-		}
 
+			if (currDiag >= diagonal) {
+				quantizedMatrix[row][col] = 0;
+			} else {
+				quantizedMatrix[row][col] = dct_matrix[row][col];
+			}
+		}
 		currDiag++;
 	} while (currDiag <= lastValue);
+
 	idct (quantizedMatrix);
 }
 
@@ -317,7 +308,7 @@ void MyImage::calculate_DCT() {
 			for (int k = 0; k < 3; k++) {
 				block = get_block (yprpb_matrix, i, 3 * j + k);
 				calculate_DCT(block);
-				fillInFinalMatrix(i, 3 * j + k);
+				complete_matrix(i, 3 * j + k);
 			}
 		}
 	}
