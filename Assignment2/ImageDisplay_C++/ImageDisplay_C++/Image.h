@@ -39,11 +39,11 @@ private:
 	char*	Data;					// RGB data of the image
 	float** yprpb_matrix;				
 	float** dct_matrix;
-	float** idctCoeff;				
+	float** idct_matrix;				
 	float** quantizedMatrix;		
-	float**	finalData;				
-	float*	outputData;				
-	char*	rbgOutputValues;		
+	float**	dct_final;				
+	float*	temp_rgb_matrix;				
+	char*	final_rgb_matrix;
 	int		QuantValue;
 
 public:
@@ -80,12 +80,11 @@ public:
 	bool	Modify();
 
 	// Calculations
-	void	convertTo1D(float ** convData);
 	void	YPRPB_to_RGB();
 	void	RGB_to_YPRPB();
 	void	calculate_DCT(float ** resBlock);
-	void	idct(float ** DCTMatrix);
-	void    zigZagTraversal(int diagonal);
+	void	calculate_idct(float ** DCTMatrix);
+	void    quantization_process(int diagonal);
 	void	calculate_DCT();
 	void	complete_matrix(int offsetX, int offsetY);
 };

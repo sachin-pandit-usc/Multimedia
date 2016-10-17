@@ -1,1 +1,26 @@
-﻿  Image.vcxproj -> E:\Multimedia\Assignment2\ImageDisplay_C++\ImageDisplay_C++\.\Debug\Image.exe
+﻿  Image.cpp
+  _WIN32_WINNT not defined. Defaulting to _WIN32_WINNT_MAXVER (see WinSDKVer.h)
+e:\multimedia\assignment2\imagedisplay_c++\imagedisplay_c++\Image.h(66): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+Image.cpp(38): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+Image.cpp(73): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+Image.cpp(74): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+Image.cpp(75): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+Image.cpp(99): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+Image.cpp(112): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+Image.cpp(120): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+Image.cpp(127): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+Image.cpp(190): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+Image.cpp(225): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+Image.cpp(232): warning C4101: 'v': unreferenced local variable
+Image.cpp(232): warning C4101: 'j': unreferenced local variable
+Image.cpp(232): warning C4101: 'i': unreferenced local variable
+Image.cpp(232): warning C4101: 'u': unreferenced local variable
+Image.cpp(320): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+Image.cpp(347): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
+Image.cpp(407): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
+  Image.vcxproj -> E:\Multimedia\Assignment2\ImageDisplay_C++\ImageDisplay_C++\.\Debug\Image.exe
