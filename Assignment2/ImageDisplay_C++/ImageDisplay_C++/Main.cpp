@@ -40,11 +40,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	HACCEL hAccelTable;
 
 	// Read in the image and its copy
-	int w, h;
+	int w, h, d;
 	char ImagePath[_MAX_PATH];
-	sscanf(lpCmdLine, "%s %d %d", &ImagePath, &w, &h);
-	inImage.setWidth(w);
-	inImage.setHeight(h);
+	sscanf(lpCmdLine, "%s %d", &ImagePath, &d);
+	inImage.setWidth(352);
+	inImage.setHeight(288);
+	outImage.setDiagonal(d);
 	inImage.setQuantValue(1);
 	if (strstr(ImagePath, ".rgb") == NULL)
 	{
@@ -59,12 +60,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			AfxMessageBox("Could not read image\nUsage - Image.exe image.rgb w h");
 			//return FALSE;
 		}
-		else {
+		else
 			outImage = inImage;
-			outImage.RGB_to_YPRPB();
-			outImage.calculate_DCT();
-			outImage.YPRPB_to_RGB();
-		}
+		outImage.RGB_to_YPRPB();
+		outImage.generateDCT();
+		outImage.YPRPB_to_RGB();
 	}
 
 	// Initialize global strings
@@ -271,3 +271,5 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	return FALSE;
 }
+
+
