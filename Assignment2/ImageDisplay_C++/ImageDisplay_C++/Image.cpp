@@ -72,8 +72,30 @@ void MyImage::constructBlock(float** convData, float** result, int offsetX, int 
 	}
 }
 
+void fill_RGB(float *r, float *g, float *b, char y, char pb, char pr) {
+	*r = (float)(1.000 * y) + (0.000 * pb) + (1.402 * pr);
+	*g = (float)(1.000 * y) - (0.344 * pb) - (0.714 * pr);
+	*b = (float)(1.000 * y) + (1.772 * pb) + (0.000 * pr);
+}
+
+void fill_ypbpr(char* matrix, int index, char *y, char *pb, char *pr) {
+	*y = matrix[3 * index];
+	*pb = matrix[3 * index + 1];
+	*pr = matrix[3 * index + 2];
+}
+
+
+void final_matrix(char *matrix, int index, float r, float g, float b) {
+	matrix[3 * index] = r;
+	matrix[3 * index + 1] = g;
+	matrix[3 * index + 2] = b;
+}
+
+
 void MyImage::YPRPB_to_RGB() {
-	char Y, Pb, Pr;
+	char y, pb, pr;
+	float r, g, b;
+
 	final_rgb = new char[Width*Height * 3];
 	final_yprpb = new char[Width*Height * 3];
 	for (int i = 0; i < Height; i++) {
@@ -83,15 +105,9 @@ void MyImage::YPRPB_to_RGB() {
 	}
 
 	for (int i = 0; i < Height * Width; i++) {
-		Y = final_yprpb[3 * i];
-		Pb = final_yprpb[3 * i + 1];
-		Pr = final_yprpb[3 * i + 2];
-		float r = (float)((1.000 * Y) + (0.000 * Pb) + (1.402 * Pr));
-		float g = (float)((1.000 * Y) - (0.344 * Pb) - (0.714 * Pr));
-		float b = (float)((1.000 * Y) + (1.772 * Pb) + (0.000 * Pr));
-		final_rgb[3 * i] = r;
-		final_rgb[3 * i + 1] = g;
-		final_rgb[3 * i + 2] = b;
+		fill_ypbpr(final_yprpb, i, &y, &pb, &pr);
+		fill_RGB(&r, &g, &b, y, pb, pr);
+		final_matrix(final_rgb, i, r, g, b);
 	}
 
 	for (int i = 0; i<(Height*Width * 3); i++)
