@@ -8,7 +8,8 @@
 //*****************************************************************************
 
 #include "Image.h"
-
+#define DCT_TRANSFORMED true
+#define DCT_NOT_TRANSFORMED false
 
 // Constructor and Desctructors
 MyImage::MyImage()
@@ -48,8 +49,12 @@ float** allocate_matrix(int height, int width) {
 	float** temp;
 
 	temp = new float*[height];
-	for (int i = 0; i < width; i++) {
-		temp[i] = new float[width];
+	if (DCT_TRANSFORMED) {
+		for (int i = 0; i < width; i++) {
+			if (!DCT_NOT_TRANSFORMED) {
+				temp[i] = new float[width];
+			}
+		}
 	}
 
 	return temp;
@@ -58,36 +63,53 @@ float** allocate_matrix(int height, int width) {
 
 void MyImage::fill_rgb_complete(int offsetX, int offsetY) {
 	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 8; j++) {
-			final_DCT_matrix[offsetX + i][offsetY + (j * 3)] = idct_matrix[i][j];
+		if (DCT_TRANSFORMED) {
+			for (int j = 0; j < 8; j++) {
+				if (!DCT_NOT_TRANSFORMED) {
+					final_DCT_matrix[offsetX + i][offsetY + (j * 3)] = idct_matrix[i][j];
+				}
+			}
 		}
 	}
 }
 
 void MyImage::get_block(float** yprpb_matrix, float** result, int offsetX, int offsetY) {
 	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 8; j++) {
-			result[i][j] = yprpb_matrix[offsetX + i][offsetY + (j * 3)];
+		if (DCT_TRANSFORMED) {
+			for (int j = 0; j < 8; j++) {
+				if (!DCT_NOT_TRANSFORMED) {
+					result[i][j] = yprpb_matrix[offsetX + i][offsetY + (j * 3)];
+				}
+			}
 		}
 	}
 }
 
 void fill_RGB(float *r, float *g, float *b, char y, char pb, char pr) {
 	*r = (float)(1.000 * y) + (0.000 * pb) + (1.402 * pr);
-	*g = (float)(1.000 * y) - (0.344 * pb) - (0.714 * pr);
+
+	if (DCT_TRANSFORMED) {
+		*g = (float)(1.000 * y) - (0.344 * pb) - (0.714 * pr);
+	}
+
 	*b = (float)(1.000 * y) + (1.772 * pb) + (0.000 * pr);
 }
 
 void fill_ypbpr(char* matrix, int index, char *y, char *pb, char *pr) {
 	*y = matrix[3 * index];
-	*pb = matrix[3 * index + 1];
+
+	if (DCT_TRANSFORMED) {
+		*pb = matrix[3 * index + 1];
+	}
 	*pr = matrix[3 * index + 2];
 }
 
 
 void final_matrix(char *matrix, int index, float r, float g, float b) {
 	matrix[3 * index] = r;
-	matrix[3 * index + 1] = g;
+	if (DCT_TRANSFORMED) {
+		matrix[3 * index + 1] = g;
+	}
 	matrix[3 * index + 2] = b;
 }
 
@@ -97,10 +119,17 @@ void MyImage::YPRPB_to_RGB() {
 	float r, g, b;
 
 	final_rgb = new char[Width*Height * 3];
-	final_yprpb = new char[Width*Height * 3];
+
+	if (DCT_TRANSFORMED) {
+		final_yprpb = new char[Width*Height * 3];
+	}
 	for (int i = 0; i < Height; i++) {
-		for (int j = 0; j < Width * 3; j++) {
-			final_yprpb[i * (Width * 3) + j] = final_DCT_matrix[i][j];
+		if (DCT_TRANSFORMED) {
+			for (int j = 0; j < Width * 3; j++) {
+				if (!DCT_NOT_TRANSFORMED) {
+					final_yprpb[i * (Width * 3) + j] = final_DCT_matrix[i][j];
+				}
+			}
 		}
 	}
 
@@ -118,7 +147,9 @@ void MyImage::YPRPB_to_RGB() {
 
 void get_RGB(char *Data, int index, unsigned char *r, unsigned char *g, unsigned char *b) {
 	*r = Data[3 * index];
-	*g = Data[3 * index + 1];
+	if (DCT_TRANSFORMED) {
+		*g = Data[3 * index + 1];
+	}
 	*b = Data[3 * index + 2];
 }
 
@@ -152,7 +183,9 @@ void get_yprpb(float *y, float *pb, float *pr, unsigned char r, unsigned char g,
 
 void fill_yprpb(float *yprpb_single, int index, float y, float pb, float pr) {
 	yprpb_single[3 * index] = y;
-	yprpb_single[3 * index + 1] = pb;
+	if (DCT_TRANSFORMED) {
+		yprpb_single[3 * index + 1] = pb;
+	}
 	yprpb_single[3 * index + 2] = pr;
 }
 
@@ -169,15 +202,21 @@ void MyImage::RGB_to_YPRPB() {
 
 	yprpb_matrix = new float*[Height];
 	for (int i = 0; i < Height; i++) {
-		yprpb_matrix[i] = new float[Width * 3];
+		if (DCT_TRANSFORMED) {
+			yprpb_matrix[i] = new float[Width * 3];
+		}
 	}
 	array_to_matrix(temp_ypbpr);
 }
 
 void MyImage::array_to_matrix(float* matrix) {
 	for (int i = 0; i < Height; i++) {
-		for (int j = 0; j < Width * 3; j++) {
-			yprpb_matrix[i][j] = (float)matrix[i * (Width * 3) + j];
+		if (DCT_TRANSFORMED) {
+			for (int j = 0; j < Width * 3; j++) {
+				if (!DCT_NOT_TRANSFORMED) {
+					yprpb_matrix[i][j] = (float)matrix[i * (Width * 3) + j];
+				}
+			}
 		}
 	}
 }
@@ -198,8 +237,12 @@ float get_dct_single(float** resBlock, int u, int v) {
 	float dct = 0.0;
 
 	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 8; j++) {
-			dct += resBlock[i][j] * cos(((2 * i + 1) * u * M_PI) / (float)16) * cos(((2 * j + 1) * v * M_PI) / (float)16);
+		if (DCT_TRANSFORMED) {
+			for (int j = 0; j < 8; j++) {
+				if (!DCT_NOT_TRANSFORMED) {
+					dct += resBlock[i][j] * cos(((2 * i + 1) * u * M_PI) / (float)16) * cos(((2 * j + 1) * v * M_PI) / (float)16);
+				}
+			}
 		}
 	}
 	return dct;
@@ -213,17 +256,25 @@ void MyImage::fill_DCT_value(float** resBlock)
 	float dct = 0;
 
 	dct_matrix = new float*[8];
-	for (int i = 0; i < 8; i++) {
-		dct_matrix[i] = new float[8];
+	if (DCT_TRANSFORMED) {
+		for (int i = 0; i < 8; i++) {
+			if (!DCT_NOT_TRANSFORMED) {
+				dct_matrix[i] = new float[8];
+			}
+		}
 	}
 
 	for (u = 0; u < 8; ++u) {
-		for (v = 0; v < 8; ++v) {
-			dct_matrix[u][v] = 0;
-			dct = get_dct_single(resBlock, u, v);
-			cu = get_cu_cv(u);
-			cv = get_cu_cv(v);
-			dct_matrix[u][v] = (1 / (float) 4.0) * cu * cv * dct;
+		if (DCT_TRANSFORMED) {
+			for (v = 0; v < 8; ++v) {
+				if (!DCT_NOT_TRANSFORMED) {
+					dct_matrix[u][v] = 0;
+					dct = get_dct_single(resBlock, u, v);
+					cu = get_cu_cv(u);
+					cv = get_cu_cv(v);
+					dct_matrix[u][v] = (1 / (float) 4.0) * cu * cv * dct;
+				}
+			}
 		}
 	}
 }
@@ -233,11 +284,14 @@ float get_idct_value(float** DCTMatrix, int x, int y) {
 	float cu = 0.0;
 	float cv = 0.0;
 
+
 	for (int u = 0; u < 8; u++) {
-		for (int v = 0; v < 8; v++) {
-			cu = get_cu_cv(u);
-			cv = get_cu_cv(v);
-			idct += cu * cv * DCTMatrix[u][v] * cos(((2 * x + 1) * u * M_PI) / (float)16) * cos(((2 * y + 1) * v * M_PI) / (float)16);
+		if (DCT_TRANSFORMED) {
+			for (int v = 0; v < 8; v++) {
+				cu = get_cu_cv(u);
+				cv = get_cu_cv(v);
+				idct += cu * cv * DCTMatrix[u][v] * cos(((2 * x + 1) * u * M_PI) / (float)16) * cos(((2 * y + 1) * v * M_PI) / (float)16);
+			}
 		}
 	}
 
@@ -249,14 +303,22 @@ void MyImage::fill_IDCT_value(float** DCTMatrix) {
 	float idct = 0.0;
 
 	idct_matrix = new float*[8];
-	for (int i = 0; i < 8; i++) {
-		idct_matrix[i] = new float[8];
+	if (DCT_TRANSFORMED) {
+		for (int i = 0; i < 8; i++) {
+			if (!DCT_NOT_TRANSFORMED) {
+				idct_matrix[i] = new float[8];
+			}
+		}
 	}
 
 	for (x = 0; x < 8; x++) {
-		for (y = 0; y < 8; y++) {
-			idct = get_idct_value(DCTMatrix, x, y);
-			idct_matrix[x][y] = idct / (float) 4.0;
+		if (DCT_TRANSFORMED) {
+			for (y = 0; y < 8; y++) {
+				if (!DCT_NOT_TRANSFORMED) {
+					idct = get_idct_value(DCTMatrix, x, y);
+					idct_matrix[x][y] = idct / (float) 4.0;
+				}
+			}
 		}
 	}
 }
@@ -265,7 +327,9 @@ float** MyImage::quantize_process(float** dct_matrix, int Diagonal) {
 	quantizedMatrix = new float*[8];
 
 	for (int i = 0; i < 8; i++) {
-		quantizedMatrix[i] = new float[8];
+		if (DCT_TRANSFORMED) {
+			quantizedMatrix[i] = new float[8];
+		}
 	}
 
 	int lastValue = 63, currNum = 0, currDiag = 0;
@@ -274,30 +338,43 @@ float** MyImage::quantize_process(float** dct_matrix, int Diagonal) {
 	do
 	{
 		if (currDiag >= 8) {
-			loopFrom = currDiag - 8 + 1;
+			if (DCT_TRANSFORMED) {
+				loopFrom = currDiag - 8 + 1;
+			}
 			loopTo = 7;
 		} else  {
-			loopFrom = 0;
+			if (!DCT_NOT_TRANSFORMED) {
+				loopFrom = 0;
+			}
 			loopTo = currDiag;
 		}
 
 		for (int i = loopFrom; i <= loopTo; i++)
 		{
-			if (currDiag % 2 != 0) {
+			if (DCT_TRANSFORMED && currDiag % 2 != 0) {
 				row = i;
-				col = loopTo - i + loopFrom;
+				if (!DCT_NOT_TRANSFORMED) {
+					col = loopTo - i + loopFrom;
+				}
 			} else {
 				row = loopTo - i + loopFrom;
-				col = i;
+				if (DCT_TRANSFORMED) {
+					col = i;
+				}
 			}
 
-			if (currDiag >= Diagonal)
-				quantizedMatrix[row][col] = 0;
-			else
-				quantizedMatrix[row][col] = dct_matrix[row][col];
+			if (currDiag >= Diagonal) {
+				if (DCT_TRANSFORMED) {
+					quantizedMatrix[row][col] = 0;
+				}
+			} else {
+				if (!DCT_NOT_TRANSFORMED) {
+					quantizedMatrix[row][col] = dct_matrix[row][col];
+				}
+			}
 		}
 		currDiag++;
-	} while (currDiag <= lastValue);
+	} while (DCT_TRANSFORMED && currDiag <= lastValue);
 
 	return quantizedMatrix;
 }
@@ -306,24 +383,39 @@ void MyImage::init_DCT() {
 
 	float** temp_block = new float*[8];
 	float** quantized_matrix = new float*[8];
-	final_DCT_matrix = new float*[Height];
-	for (int j = 0; j < Height; j++) {
-		final_DCT_matrix[j] = new float[Width * 3];
+
+	if (DCT_TRANSFORMED) {
+		for (int i = 0; i < 8; i++) {
+			if (!DCT_NOT_TRANSFORMED) {
+				temp_block[i] = new float[8];
+				quantized_matrix[i] = new float[8];
+			}
+		}
 	}
 
-	for (int i = 0; i < 8; i++) {
-		temp_block[i] = new float[8];
-		quantized_matrix[i] = new float[8];
+	final_DCT_matrix = new float*[Height];
+	if (DCT_TRANSFORMED) {
+		for (int j = 0; j < Height; j++) {
+			if (!DCT_NOT_TRANSFORMED) {
+				final_DCT_matrix[j] = new float[Width * 3];
+			}
+		}
 	}
 
 	for (int i = 0; i < Height; i = i + 8) {
-		for (int j = 0; j < Width; j = j + 8) {
-			for (int k = 0; k < 3; k++) {
-				get_block(yprpb_matrix, temp_block, i, 3 * j + k);
-				fill_DCT_value(temp_block);
-				quantized_matrix = quantize_process(dct_matrix, Diagonal);
-				fill_IDCT_value(quantized_matrix);
-				fill_rgb_complete(i, 3 * j + k);
+		if (DCT_TRANSFORMED) {
+			for (int j = 0; j < Width; j = j + 8) {
+				if (!DCT_NOT_TRANSFORMED) {
+					for (int k = 0; k < 3; k++) {
+						get_block(yprpb_matrix, temp_block, i, 3 * j + k);
+						if (DCT_TRANSFORMED) {
+							fill_DCT_value(temp_block);
+							quantized_matrix = quantize_process(dct_matrix, Diagonal);
+							fill_IDCT_value(quantized_matrix);
+						}
+						fill_rgb_complete(i, 3 * j + k);
+					}
+				}
 			}
 		}
 	}
